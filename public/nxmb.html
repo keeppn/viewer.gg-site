@@ -1,17 +1,21 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NXMB | Premium Cases for Handheld Gaming</title>
+
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Sekuya + Orbitron + DM Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Sekuya&family=Orbitron:wght@400;500;600;700;800;900&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
     <style>
         :root {
             --neon-green: #00ff88;
             --neon-green-dim: #00cc6a;
-            --neon-green-glow: rgba(0, 255, 136, 0.4);
+            --neon-green-glow: rgba(0, 255, 136, 0.5);
             --dark-bg: #050509;
             --darker-bg: #04040a;
             --card-bg: #12121a;
@@ -24,7 +28,6 @@
             --accent-purple: #a855f7;
             --accent-blue: #3b82f6;
             --accent-orange: #f97316;
-            --accent-pink: #ec4899;
         }
 
         * {
@@ -33,12 +36,10 @@
             box-sizing: border-box;
         }
 
-        html {
-            scroll-behavior: smooth;
-        }
+        html { scroll-behavior: smooth; }
 
         body {
-            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'DM Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
             font-size: 16px;
             line-height: 1.6;
             background-color: var(--dark-bg);
@@ -47,24 +48,15 @@
         }
 
         /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--darker-bg);
-        }
-
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--darker-bg); }
         ::-webkit-scrollbar-thumb {
             background: var(--neon-green-dim);
             border-radius: 4px;
         }
+        ::-webkit-scrollbar-thumb:hover { background: var(--neon-green); }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--neon-green);
-        }
-
-        /* Animated Grid Background */
+        /* Animated Background */
         .animated-bg {
             position: fixed;
             inset: 0;
@@ -72,7 +64,6 @@
             z-index: -2;
             overflow: hidden;
         }
-
         .animated-bg canvas {
             position: absolute;
             inset: 0;
@@ -87,12 +78,11 @@
             pointer-events: none;
             z-index: -2;
             background:
-                radial-gradient(ellipse at 50% 0%, rgba(0, 255, 136, 0.04) 0%, transparent 55%),
-                radial-gradient(circle at 10% 90%, rgba(59, 130, 246, 0.06) 0%, transparent 60%),
-                radial-gradient(circle at 90% 20%, rgba(168, 85, 247, 0.06) 0%, transparent 60%);
+                radial-gradient(ellipse at 50% 0%, rgba(0, 255, 136, 0.05) 0%, transparent 55%),
+                radial-gradient(circle at 10% 90%, rgba(59, 130, 246, 0.07) 0%, transparent 60%),
+                radial-gradient(circle at 90% 20%, rgba(168, 85, 247, 0.07) 0%, transparent 60%);
         }
 
-        /* Scanline overlay – extra subtle */
         .scanlines {
             position: fixed;
             inset: 0;
@@ -108,7 +98,6 @@
             mix-blend-mode: soft-light;
         }
 
-        /* Typography */
         h1, h2, h3, h4, h5, h6 {
             font-family: 'Orbitron', monospace;
             font-weight: 700;
@@ -121,7 +110,7 @@
             line-height: 1.7;
         }
 
-        /* Navigation */
+        /* NAVIGATION */
         nav {
             position: fixed;
             top: 0;
@@ -142,77 +131,64 @@
             border-bottom: 1px solid var(--card-border);
         }
 
-     .logo {
-    font-family: 'Orbitron', monospace;
-    font-size: 1.6rem;
-    font-weight: 900;
-    letter-spacing: 0.35em;
-    text-transform: uppercase;
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.45rem 1.9rem 0.45rem 2.2rem;
-    border-radius: 999px;
-    text-decoration: none;
-    color: var(--text-white);
-    background:
-        radial-gradient(circle at 0% 0%, rgba(0, 255, 136, 0.18), transparent 55%),
-        linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(3, 7, 18, 0.98));
-    border: 1px solid rgba(148, 163, 184, 0.7);
-    overflow: hidden;
-}
+        .sekuya-regular {
+            font-family: "Sekuya", system-ui;
+            font-weight: 400;
+            font-style: normal;
+        }
 
-.logo span {
-    position: relative;
-    z-index: 1;
-}
+        .logo {
+            font-family: "Sekuya", system-ui;
+            font-size: 1.9rem;
+            font-weight: 400;
+            text-transform: uppercase;
+            letter-spacing: 0.35em;
+            text-decoration: none;
+            color: var(--text-white);
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.35rem 2.1rem 0.35rem 2.4rem;
+        }
 
-/* gradient ink for the text itself */
-.logo {
-    background-clip: padding-box;
-    -webkit-background-clip: padding-box;
-}
+        .logo::before {
+            content: "";
+            position: absolute;
+            inset: -4px;
+            border-radius: 999px;
+            background:
+                radial-gradient(circle at 0% 0%, rgba(0,255,136,0.6), transparent 55%),
+                radial-gradient(circle at 100% 100%, rgba(56,189,248,0.4), transparent 55%);
+            filter: blur(18px);
+            opacity: 0.7;
+            z-index: -2;
+        }
 
-.logo::after {
-    content: "NXMB";
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-    background: linear-gradient(120deg, #e5f9ff, #22c55e, #a855f7);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    letter-spacing: 0.35em;
-}
+        .logo::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 999px;
+            border: 1px solid rgba(0,255,136,0.65);
+            box-shadow:
+                0 0 20px rgba(0, 255, 136, 0.45),
+                0 0 40px rgba(0, 255, 136, 0.3);
+            z-index: -1;
+            background: radial-gradient(circle at 50% 0%, rgba(15,23,42,0.8), rgba(3,7,18,0.95));
+        }
 
-/* subtle glint sweep on hover */
-.logo::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-        120deg,
-        transparent 0%,
-        rgba(255, 255, 255, 0.16) 45%,
-        transparent 80%
-    );
-    transform: translateX(-55%);
-    opacity: 0;
-    transition: transform 0.5s ease-out, opacity 0.5s ease-out;
-}
+        .logo span {
+            text-shadow:
+                0 0 10px rgba(0,255,136,0.7),
+                0 0 20px rgba(0,255,136,0.6);
+        }
 
-.logo:hover::before {
-    transform: translateX(40%);
-    opacity: 1;
-}
-
-.logo:hover {
-    box-shadow: 0 0 40px rgba(0, 255, 136, 0.25);
-}
+        .logo:hover::after {
+            box-shadow:
+                0 0 26px rgba(0,255,136,0.65),
+                0 0 60px rgba(0,255,136,0.4);
+        }
 
         .nav-links {
             display: flex;
@@ -262,6 +238,7 @@
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
+            border-radius: 999px;
         }
 
         .btn-nav::before {
@@ -284,7 +261,7 @@
             left: 0;
         }
 
-        /* Mobile menu toggle */
+        /* Mobile nav toggle */
         .mobile-toggle {
             display: none;
             flex-direction: column;
@@ -300,7 +277,7 @@
             transition: all 0.3s ease;
         }
 
-        /* Hero Section */
+        /* HERO */
         .hero {
             min-height: 100vh;
             display: flex;
@@ -313,29 +290,26 @@
         }
 
         .hero-badge {
-            font-family: 'JetBrains Mono', monospace;
+            font-family: 'DM Sans', sans-serif;
             font-size: 0.8rem;
             font-weight: 500;
             letter-spacing: 0.2em;
+            text-transform: uppercase;
             color: var(--neon-green);
-            background: rgba(0, 255, 136, 0.08);
+            background: rgba(0, 255, 136, 0.1);
             border: 1px solid rgba(0, 255, 136, 0.3);
             padding: 0.6rem 1.5rem;
             margin-bottom: 2rem;
-            animation: fadeInUp 0.8s ease forwards;
-            opacity: 0;
         }
 
         .hero h1 {
-            font-size: clamp(2.5rem, 8vw, 5.5rem);
+            font-size: clamp(2.5rem, 8vw, 5.2rem);
             font-weight: 900;
             margin-bottom: 1.5rem;
-            animation: fadeInUp 0.8s ease 0.2s forwards;
-            opacity: 0;
             max-width: 900px;
         }
 
-        .hero h1 .highlight {
+        .hero .highlight {
             color: var(--neon-green);
             text-shadow: 0 0 30px var(--neon-green-glow);
         }
@@ -346,8 +320,6 @@
             color: var(--text-gray);
             max-width: 550px;
             margin-bottom: 2.5rem;
-            animation: fadeInUp 0.8s ease 0.4s forwards;
-            opacity: 0;
         }
 
         .hero-cta {
@@ -355,22 +327,23 @@
             gap: 1rem;
             flex-wrap: wrap;
             justify-content: center;
-            animation: fadeInUp 0.8s ease 0.6s forwards;
-            opacity: 0;
         }
 
-        .btn-primary {
+        .btn-primary,
+        .btn-secondary {
             font-family: 'DM Sans', sans-serif;
             font-size: 0.95rem;
             font-weight: 600;
             padding: 1rem 2.5rem;
+            cursor: pointer;
+            border-radius: 999px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
             background: var(--neon-green);
             color: var(--dark-bg);
             border: none;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
         }
 
         .btn-primary:hover {
@@ -378,20 +351,10 @@
             box-shadow: 0 10px 40px var(--neon-green-glow);
         }
 
-        .btn-primary:active {
-            transform: translateY(-1px);
-        }
-
         .btn-secondary {
-            font-family: 'DM Sans', sans-serif;
-            font-size: 0.95rem;
-            font-weight: 600;
-            padding: 1rem 2.5rem;
             background: transparent;
             color: var(--text-white);
             border: 1px solid var(--text-dim);
-            cursor: pointer;
-            transition: all 0.3s ease;
         }
 
         .btn-secondary:hover {
@@ -403,8 +366,8 @@
             display: flex;
             gap: 3rem;
             margin-top: 4rem;
-            animation: fadeInUp 0.8s ease 0.8s forwards;
-            opacity: 0;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         .stat {
@@ -445,18 +408,7 @@
             50% { transform: translateX(-50%) translateY(10px); }
         }
 
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Section Styles */
+        /* SECTIONS */
         .section {
             padding: 6rem 2rem;
             max-width: 1300px;
@@ -469,7 +421,7 @@
         }
 
         .section-label {
-            font-family: 'JetBrains Mono', monospace;
+            font-family: 'DM Sans', sans-serif;
             font-size: 0.75rem;
             font-weight: 500;
             text-transform: uppercase;
@@ -491,7 +443,7 @@
             margin: 0 auto;
         }
 
-        /* Supported Devices Section */
+        /* DEVICES */
         .devices {
             background: radial-gradient(circle at top, #060613 0%, #04040a 60%, #020208 100%);
             padding: 5rem 2rem;
@@ -512,70 +464,44 @@
 
         .device-item {
             text-align: center;
-            padding: 2rem 2.5rem;
+            padding: 1.75rem 2.5rem 1.9rem;
             transition: all 0.4s ease;
             cursor: pointer;
-            border-radius: 22px;
-            background: radial-gradient(circle at top, rgba(15,23,42,0.85), rgba(5,5,10,0.95));
-            border: 1px solid rgba(15,23,42,0.9);
-            box-shadow: 0 18px 60px rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border-radius: 18px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(15, 23, 42, 0.95);
         }
 
         .device-item:hover {
             transform: translateY(-6px);
-            border-color: rgba(0,255,136,0.6);
+            border-color: rgba(0,255,136,0.5);
             box-shadow: 0 24px 80px rgba(0,255,136,0.18);
         }
 
         .device-logo {
-    height: 64px;
-    width: 220px;
-    margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 999px;
-    padding: 0.75rem 1.5rem;
-    background:
-        radial-gradient(circle at 0% 0%, rgba(0, 255, 136, 0.05), transparent 55%),
-        linear-gradient(135deg, #f9fafb, #e5e7eb); /* light pill */
-    border: 1px solid rgba(148, 163, 184, 0.7);
-    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.65);
-    overflow: hidden;
-    transition: all 0.35s ease;
-}
-
-.device-item:hover .device-logo {
-    border-color: var(--neon-green);
-    box-shadow: 0 24px 70px rgba(0, 255, 136, 0.22);
-    transform: translateY(-2px);
-}
-
-
-        .device-logo img {
-            display: block;
-            max-height: 100%;
-            max-width: 100%;
-            object-fit: contain;
+            height: 50px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .device-item:hover .device-logo {
-            border-color: var(--neon-green);
-            box-shadow: 0 24px 70px rgba(0,255,136,0.25);
-            transform: translateY(-2px);
+        .device-logo img {
+            max-height: 100%;
+            width: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 0 8px rgba(0,0,0,0.6));
         }
 
         .device-name {
             font-family: 'Orbitron', monospace;
             font-size: 0.95rem;
             font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: var(--text-gray);
-            transition: color 0.3s ease;
-        }
-
-        .device-item:hover .device-name {
-            color: var(--text-white);
+            margin-bottom: 0.35rem;
+            color: var(--text-light);
         }
 
         .device-status {
@@ -588,20 +514,20 @@
             color: var(--accent-orange);
         }
 
-        /* Products Section */
+        /* PRODUCTS */
         .products-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 1.5rem;
         }
 
         @media (min-width: 992px) {
-    .products-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr)); /* always 2 per row on desktop */
-        max-width: 900px;
-        margin: 0 auto;
-    }
-}
+            .products-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                max-width: 900px;
+                margin: 0 auto;
+            }
+        }
 
         .product-card {
             background: var(--card-bg);
@@ -637,7 +563,7 @@
         .product-image {
             width: 100%;
             height: 260px;
-            background: linear-gradient(135deg, #151520 0%, #1a1a2e 100%);
+            background: radial-gradient(circle at top, #151520 0%, #050510 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -645,44 +571,37 @@
             overflow: hidden;
         }
 
-        .product-image img {
-            max-width: 75%;
-            max-height: 75%;
-            object-fit: contain;
+        /* REAL IMAGE PLACEHOLDERS – replace src=... in HTML */
+        .product-image img.product-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scale(1.02);
             transition: transform 0.4s ease;
         }
 
-        .product-card:hover .product-image img {
-            transform: scale(1.08);
+        .product-card:hover .product-image img.product-img {
+            transform: scale(1.06);
         }
 
         .product-tag {
             position: absolute;
             top: 1rem;
             right: 1rem;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.65rem;
-            font-weight: 500;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 0.35rem 0.75rem;
+            letter-spacing: 0.08em;
+            padding: 0.35rem 0.8rem;
+            border-radius: 999px;
             background: var(--neon-green);
             color: var(--dark-bg);
         }
 
-        .product-tag.limited {
-            background: var(--accent-orange);
-        }
-
-        .product-tag.new {
-            background: var(--accent-purple);
-            color: white;
-        }
-
-        .product-tag.sold-out {
-            background: var(--text-dim);
-            color: white;
-        }
+        .product-tag.limited { background: var(--accent-orange); color: #111827; }
+        .product-tag.new { background: var(--accent-purple); color: #f9fafb; }
+        .product-tag.sold-out { background: var(--text-dim); color: #f9fafb; }
 
         .product-content {
             padding: 1.25rem 1.5rem 1.5rem;
@@ -692,6 +611,7 @@
             font-size: 1.1rem;
             font-weight: 600;
             margin-bottom: 0.4rem;
+            color: var(--text-white);
         }
 
         .product-desc {
@@ -723,6 +643,7 @@
             border: 1px solid var(--text-dim);
             color: var(--text-white);
             cursor: pointer;
+            border-radius: 999px;
             transition: all 0.3s ease;
         }
 
@@ -732,7 +653,7 @@
             color: var(--dark-bg);
         }
 
-        /* How It Works Section */
+        /* HOW IT WORKS */
         .how-it-works {
             background: var(--darker-bg);
             padding: 6rem 2rem;
@@ -748,23 +669,11 @@
             grid-template-columns: repeat(3, 1fr);
             gap: 2rem;
             margin-top: 3rem;
-            position: relative;
-        }
-
-        .steps-grid::before {
-            content: '';
-            position: absolute;
-            top: 60px;
-            left: 15%;
-            right: 15%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--card-border), var(--card-border), transparent);
         }
 
         .step-card {
             text-align: center;
             padding: 2rem 1.5rem;
-            position: relative;
         }
 
         .step-number {
@@ -775,12 +684,11 @@
             background: var(--neon-green);
             width: 50px;
             height: 50px;
+            border-radius: 999px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 1.5rem;
-            position: relative;
-            z-index: 1;
         }
 
         .step-title {
@@ -788,13 +696,7 @@
             margin-bottom: 0.75rem;
         }
 
-        .step-desc {
-            font-size: 0.95rem;
-            color: var(--text-gray);
-            line-height: 1.6;
-        }
-
-        /* Upcoming Drops Section */
+        /* DROPS / COUNTDOWN */
         .drops {
             padding: 6rem 2rem;
             position: relative;
@@ -818,23 +720,22 @@
             overflow: hidden;
         }
 
-        .countdown-box::before {
+        .countdown-box::before,
+        .countdown-box::after {
             content: '';
             position: absolute;
-            top: 0;
             left: 0;
             right: 0;
             height: 2px;
+        }
+
+        .countdown-box::before {
+            top: 0;
             background: linear-gradient(90deg, transparent, var(--neon-green), var(--accent-purple), transparent);
         }
 
         .countdown-box::after {
-            content: '';
-            position: absolute;
             bottom: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
             background: linear-gradient(90deg, transparent, var(--accent-purple), var(--neon-green), transparent);
         }
 
@@ -861,7 +762,7 @@
         }
 
         .countdown-label {
-            font-family: 'JetBrains Mono', monospace;
+            font-family: 'DM Sans', sans-serif;
             font-size: 0.7rem;
             font-weight: 500;
             letter-spacing: 0.3em;
@@ -890,6 +791,7 @@
             justify-content: center;
             gap: 1rem;
             margin-bottom: 2.5rem;
+            flex-wrap: wrap;
         }
 
         .countdown-item {
@@ -897,55 +799,18 @@
             position: relative;
         }
 
-        .countdown-item:not(:last-child)::after {
-            content: ':';
-            position: absolute;
-            right: -0.7rem;
-            top: 50%;
-            transform: translateY(-70%);
-            font-family: 'Orbitron', monospace;
-            font-size: 2rem;
-            color: var(--text-dim);
-            animation: blink 1s step-end infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
         .countdown-value {
             font-family: 'Orbitron', monospace;
-            font-size: 3rem;
+            font-size: 2.6rem;
             font-weight: 700;
             color: var(--text-white);
             background: var(--card-bg);
             border: 1px solid var(--card-border);
             padding: 1rem 1.5rem;
-            min-width: 100px;
+            min-width: 90px;
             display: block;
             position: relative;
             overflow: hidden;
-        }
-
-        .countdown-value::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 50%;
-            background: rgba(255, 255, 255, 0.02);
-        }
-
-        .countdown-value.changing {
-            animation: flip 0.3s ease;
-        }
-
-        @keyframes flip {
-            0% { transform: scaleY(1); }
-            50% { transform: scaleY(0.8); }
-            100% { transform: scaleY(1); }
         }
 
         .countdown-unit {
@@ -957,6 +822,16 @@
             letter-spacing: 0.15em;
         }
 
+        .countdown-value.changing {
+            animation: flip 0.3s ease;
+        }
+
+        @keyframes flip {
+            0% { transform: scaleY(1); }
+            50% { transform: scaleY(0.85); }
+            100% { transform: scaleY(1); }
+        }
+
         .drop-notify-btn {
             font-family: 'DM Sans', sans-serif;
             font-size: 0.95rem;
@@ -966,6 +841,7 @@
             border: 1px solid var(--neon-green);
             color: var(--neon-green);
             cursor: pointer;
+            border-radius: 999px;
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
@@ -985,17 +861,14 @@
 
         .drop-notify-btn:hover {
             color: var(--dark-bg);
+            box-shadow: 0 0 30px var(--neon-green-glow);
         }
 
         .drop-notify-btn:hover::before {
             left: 0;
         }
 
-        .drop-notify-btn:hover {
-            box-shadow: 0 0 30px var(--neon-green-glow);
-        }
-
-        /* Features Section */
+        /* FEATURES */
         .features {
             background: var(--darker-bg);
             padding: 6rem 2rem;
@@ -1008,17 +881,17 @@
 
         .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
             gap: 1.5rem;
         }
 
-      @media (min-width: 992px) {
-    .features-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr)); /* 3 columns on desktop */
-        max-width: 1100px;
-        margin: 0 auto;
-    }
-}  
+        @media (min-width: 992px) {
+            .features-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                max-width: 1100px;
+                margin: 0 auto;
+            }
+        }
 
         .feature-card {
             padding: 2rem;
@@ -1030,6 +903,7 @@
         .feature-card:hover {
             border-color: var(--neon-green-dim);
             background: linear-gradient(135deg, rgba(0, 255, 136, 0.03) 0%, transparent 100%);
+            transform: translateY(-4px);
         }
 
         .feature-icon {
@@ -1041,22 +915,11 @@
             font-size: 1.4rem;
             margin-bottom: 1.25rem;
             background: rgba(0, 255, 136, 0.1);
-            border: 1px solid rgba(0, 255, 136, 0.2);
+            border: 1px solid rgba(0, 255, 136, 0.25);
             color: var(--neon-green);
         }
 
-        .feature-title {
-            font-size: 1rem;
-            margin-bottom: 0.6rem;
-        }
-
-        .feature-desc {
-            font-size: 0.9rem;
-            color: var(--text-gray);
-            line-height: 1.6;
-        }
-
-        /* FAQ Section */
+        /* FAQ */
         .faq {
             padding: 6rem 2rem;
         }
@@ -1120,7 +983,7 @@
             line-height: 1.7;
         }
 
-        /* Newsletter Section */
+        /* NEWSLETTER */
         .newsletter {
             background: var(--darker-bg);
             padding: 6rem 2rem;
@@ -1148,22 +1011,12 @@
             z-index: 1;
         }
 
-        .newsletter h2 {
-            font-size: clamp(1.6rem, 3vw, 2.2rem);
-            margin-bottom: 1rem;
-        }
-
-        .newsletter p {
-            font-size: 1rem;
-            color: var(--text-gray);
-            margin-bottom: 2rem;
-        }
-
         .newsletter-form {
             display: flex;
             gap: 0.75rem;
             flex-wrap: wrap;
             justify-content: center;
+            margin-top: 2rem;
         }
 
         .newsletter-input {
@@ -1197,6 +1050,7 @@
             color: var(--dark-bg);
             border: none;
             cursor: pointer;
+            border-radius: 999px;
             transition: all 0.3s ease;
         }
 
@@ -1204,7 +1058,7 @@
             box-shadow: 0 0 30px var(--neon-green-glow);
         }
 
-        /* Footer */
+        /* FOOTER */
         footer {
             border-top: 1px solid var(--card-border);
             padding: 4rem 2rem 2rem;
@@ -1223,9 +1077,8 @@
         }
 
         .footer-brand .logo {
-            font-size: 1.5rem;
-            display: inline-block;
-            margin-bottom: 1rem;
+            font-size: 1.4rem;
+            padding: 0.25rem 1.6rem 0.25rem 1.9rem;
         }
 
         .footer-brand p {
@@ -1233,6 +1086,7 @@
             color: var(--text-gray);
             max-width: 280px;
             line-height: 1.6;
+            margin-top: 1rem;
         }
 
         .footer-column h4 {
@@ -1269,8 +1123,8 @@
         }
 
         .social-link {
-            width: 40px;
-            height: 40px;
+            width: 38px;
+            height: 38px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1278,7 +1132,8 @@
             color: var(--text-gray);
             text-decoration: none;
             transition: all 0.3s ease;
-            font-size: 1.1rem;
+            font-size: 0.95rem;
+            border-radius: 999px;
         }
 
         .social-link:hover {
@@ -1317,19 +1172,14 @@
             color: var(--text-gray);
         }
 
-        /* Responsive */
+        /* RESPONSIVE */
         @media (max-width: 900px) {
             .footer-grid {
                 grid-template-columns: 1fr 1fr;
             }
-
             .steps-grid {
                 grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-
-            .steps-grid::before {
-                display: none;
+                gap: 1.5rem;
             }
         }
 
@@ -1337,25 +1187,15 @@
             nav {
                 padding: 1rem;
             }
+            .nav-links { display: none; }
+            .mobile-toggle { display: flex; }
 
-            .nav-links {
-                display: none;
-            }
-
-            .mobile-toggle {
-                display: flex;
+            .hero {
+                padding-top: 7rem;
             }
 
             .hero h1 {
                 font-size: 2.2rem;
-            }
-
-            .hero-stats {
-                gap: 2rem;
-            }
-
-            .stat-number {
-                font-size: 1.5rem;
             }
 
             .hero-cta {
@@ -1364,12 +1204,9 @@
                 max-width: 300px;
             }
 
-            .btn-primary, .btn-secondary {
+            .btn-primary,
+            .btn-secondary {
                 width: 100%;
-            }
-
-            .products-grid {
-                grid-template-columns: 1fr;
             }
 
             .devices-grid {
@@ -1378,21 +1215,6 @@
 
             .device-item {
                 width: 100%;
-            }
-
-            .countdown-timer {
-                gap: 0.5rem;
-            }
-
-            .countdown-value {
-                font-size: 2rem;
-                padding: 0.75rem 1rem;
-                min-width: 70px;
-            }
-
-            .countdown-item:not(:last-child)::after {
-                font-size: 1.5rem;
-                right: -0.5rem;
             }
 
             .footer-grid {
@@ -1414,19 +1236,7 @@
             }
         }
 
-        /* Animations on scroll */
-        .fade-in {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.6s ease;
-        }
-
-        .fade-in.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* Loading animation */
+        /* Loader */
         .loader {
             position: fixed;
             inset: 0;
@@ -1444,12 +1254,14 @@
         }
 
         .loader-text {
-            font-family: 'Orbitron', monospace;
-            font-size: 2.5rem;
-            font-weight: 900;
-            letter-spacing: 0.3em;
-            color: var(--neon-green);
-            animation: pulse 1s infinite;
+            font-family: "Sekuya", system-ui;
+            font-size: 2.6rem;
+            letter-spacing: 0.35em;
+            color: var(--text-white);
+            text-shadow:
+                0 0 16px rgba(0,255,136,0.9),
+                0 0 32px rgba(0,255,136,0.7);
+            animation: pulse 1.1s infinite;
         }
 
         @keyframes pulse {
@@ -1464,16 +1276,16 @@
         <span class="loader-text">NXMB</span>
     </div>
 
-    <!-- Animated Background -->
+    <!-- Background -->
     <div class="animated-bg">
         <canvas id="gridCanvas"></canvas>
     </div>
     <div class="gradient-overlay"></div>
     <div class="scanlines"></div>
 
-    <!-- Navigation -->
+    <!-- NAV -->
     <nav id="navbar">
-        <a href="#" class="logo">NXMB</a>
+        <a href="#" class="logo sekuya-regular"><span>NXMB</span></a>
         <div class="nav-links">
             <a href="#products">Shop</a>
             <a href="#devices">Devices</a>
@@ -1482,17 +1294,17 @@
             <button class="btn-nav">Join Waitlist</button>
         </div>
         <div class="mobile-toggle">
-            <span></span>
-            <span></span>
-            <span></span>
+            <span></span><span></span><span></span>
         </div>
     </nav>
 
-    <!-- Hero Section -->
+    <!-- HERO -->
     <section class="hero">
-        <span class="hero-badge">Pre-Orders Open</span>
+        <span class="hero-badge">PRE-ORDERS OPEN</span>
         <h1>Premium Cases for <span class="highlight">Handheld Gaming</span></h1>
-        <p class="hero-subtitle">Limited edition artwork meets serious protection. Exclusive drops for Steam Deck, ROG Ally, and Legion Go. Stand out from the crowd.</p>
+        <p class="hero-subtitle">
+            Limited edition artwork meets serious protection. Exclusive drops for Steam Deck, ROG Ally, and Legion Go. Stand out from the crowd.
+        </p>
         <div class="hero-cta">
             <button class="btn-primary">Shop Collection</button>
             <button class="btn-secondary">View Lookbook</button>
@@ -1516,38 +1328,37 @@
         </div>
     </section>
 
-    <!-- Supported Devices -->
+    <!-- DEVICES -->
     <section class="devices" id="devices">
         <div class="devices-container">
-            <div class="section-header fade-in">
+            <div class="section-header">
                 <span class="section-label">Compatibility</span>
                 <h2 class="section-title">Supported Devices</h2>
                 <p class="section-subtitle">Precision-fit cases designed for your favorite handhelds.</p>
             </div>
-            <div class="devices-grid fade-in">
-                <!-- Steam Deck -->
+            <div class="devices-grid">
                 <div class="device-item">
                     <div class="device-logo">
-                        <!-- replace path if needed -->
-                        <img src="Steam_Deck_colored_logo.svg.png" alt="Steam Deck logo">
+                        <!-- Use your WHITE Steam Deck logo here -->
+                        <img src="/Steam_Deck_white_logo.png" alt="Steam Deck logo">
                     </div>
                     <h4 class="device-name">Steam Deck</h4>
                     <span class="device-status">Available Now</span>
                 </div>
 
-                <!-- ROG Ally -->
                 <div class="device-item">
                     <div class="device-logo">
-                        <img src="ROG-logo-black.png" alt="ROG Ally logo">
+                        <!-- WHITE ROG Ally logo -->
+                        <img src="/rog-ally-white.png" alt="ROG Ally logo">
                     </div>
                     <h4 class="device-name">ROG Ally</h4>
                     <span class="device-status">Available Now</span>
                 </div>
 
-                <!-- Legion Go -->
                 <div class="device-item">
                     <div class="device-logo">
-                        <img src="legion.png" alt="Legion Go logo">
+                        <!-- WHITE Legion Go logo -->
+                        <img src="/legion-go-white.png" alt="Legion Go logo">
                     </div>
                     <h4 class="device-name">Legion Go</h4>
                     <span class="device-status coming">Coming Soon</span>
@@ -1556,24 +1367,21 @@
         </div>
     </section>
 
-    <!-- Products Section -->
+    <!-- PRODUCTS -->
     <section class="section" id="products">
-        <div class="section-header fade-in">
+        <div class="section-header">
             <span class="section-label">Featured</span>
             <h2 class="section-title">Current Collection</h2>
             <p class="section-subtitle">Limited edition designs. Once they sell out, they're gone forever.</p>
         </div>
 
         <div class="products-grid">
-            <div class="product-card fade-in">
+            <!-- PRODUCT 1 -->
+            <div class="product-card">
                 <div class="product-image">
                     <span class="product-tag limited">Limited</span>
-                    <svg width="200" height="140" viewBox="0 0 200 140" fill="none">
-                        <rect x="20" y="20" width="160" height="100" rx="12" fill="#1a1a2e" stroke="#00ff88" stroke-width="2"/>
-                        <rect x="35" y="35" width="45" height="45" rx="6" fill="#0f3460"/>
-                        <circle cx="140" cy="58" r="18" fill="#0f3460"/>
-                        <rect x="55" y="92" width="90" height="12" rx="3" fill="#0f3460"/>
-                    </svg>
+                    <!-- REAL IMAGE PLACEHOLDER – replace src with your file -->
+                    <img src="/images/sakura-drift.jpg" alt="SAKURA DRIFT case" class="product-img">
                 </div>
                 <div class="product-content">
                     <h3 class="product-name">SAKURA DRIFT</h3>
@@ -1585,15 +1393,11 @@
                 </div>
             </div>
 
-            <div class="product-card fade-in">
+            <!-- PRODUCT 2 -->
+            <div class="product-card">
                 <div class="product-image">
                     <span class="product-tag new">New</span>
-                    <svg width="200" height="140" viewBox="0 0 200 140" fill="none">
-                        <rect x="20" y="20" width="160" height="100" rx="12" fill="#1a1a2e" stroke="#a855f7" stroke-width="2"/>
-                        <rect x="35" y="35" width="45" height="45" rx="6" fill="#16213e"/>
-                        <circle cx="140" cy="58" r="18" fill="#16213e"/>
-                        <rect x="55" y="92" width="90" height="12" rx="3" fill="#16213e"/>
-                    </svg>
+                    <img src="/images/neon-circuit.jpg" alt="NEON CIRCUIT case" class="product-img">
                 </div>
                 <div class="product-content">
                     <h3 class="product-name">NEON CIRCUIT</h3>
@@ -1605,15 +1409,11 @@
                 </div>
             </div>
 
-            <div class="product-card fade-in">
+            <!-- PRODUCT 3 -->
+            <div class="product-card">
                 <div class="product-image">
                     <span class="product-tag">In Stock</span>
-                    <svg width="200" height="140" viewBox="0 0 200 140" fill="none">
-                        <rect x="20" y="20" width="160" height="100" rx="12" fill="#1a1a2e" stroke="#3b82f6" stroke-width="2"/>
-                        <rect x="35" y="35" width="45" height="45" rx="6" fill="#0a192f"/>
-                        <circle cx="140" cy="58" r="18" fill="#0a192f"/>
-                        <rect x="55" y="92" width="90" height="12" rx="3" fill="#0a192f"/>
-                    </svg>
+                    <img src="/images/midnight-wave.jpg" alt="MIDNIGHT WAVE case" class="product-img">
                 </div>
                 <div class="product-content">
                     <h3 class="product-name">MIDNIGHT WAVE</h3>
@@ -1625,15 +1425,11 @@
                 </div>
             </div>
 
-            <div class="product-card fade-in">
+            <!-- PRODUCT 4 -->
+            <div class="product-card">
                 <div class="product-image">
                     <span class="product-tag sold-out">Sold Out</span>
-                    <svg width="200" height="140" viewBox="0 0 200 140" fill="none">
-                        <rect x="20" y="20" width="160" height="100" rx="12" fill="#1a1a2e" stroke="#71717a" stroke-width="2"/>
-                        <rect x="35" y="35" width="45" height="45" rx="6" fill="#1f1f2e"/>
-                        <circle cx="140" cy="58" r="18" fill="#1f1f2e"/>
-                        <rect x="55" y="92" width="90" height="12" rx="3" fill="#1f1f2e"/>
-                    </svg>
+                    <img src="/images/phantom-black.jpg" alt="PHANTOM BLACK case" class="product-img">
                 </div>
                 <div class="product-content">
                     <h3 class="product-name">PHANTOM BLACK</h3>
@@ -1647,50 +1443,50 @@
         </div>
     </section>
 
-    <!-- How It Works Section -->
+    <!-- HOW IT WORKS -->
     <section class="how-it-works" id="how">
         <div class="how-container">
-            <div class="section-header fade-in">
+            <div class="section-header">
                 <span class="section-label">Process</span>
                 <h2 class="section-title">How It Works</h2>
                 <p class="section-subtitle">Simple pre-order process. No surprises.</p>
             </div>
 
             <div class="steps-grid">
-                <div class="step-card fade-in">
+                <div class="step-card">
                     <span class="step-number">01</span>
                     <h3 class="step-title">Choose Your Design</h3>
                     <p class="step-desc">Browse our collection and pick your favorite. Each design is available for limited time only.</p>
                 </div>
-                <div class="step-card fade-in">
+                <div class="step-card">
                     <span class="step-number">02</span>
                     <h3 class="step-title">Place Pre-Order</h3>
-                    <p class="step-desc">Secure your case with full payment. Pre-order window is open for 2-3 weeks per drop.</p>
+                    <p class="step-desc">Secure your case with full payment. Pre-order window is open for 2–3 weeks per drop.</p>
                 </div>
-                <div class="step-card fade-in">
+                <div class="step-card">
                     <span class="step-number">03</span>
                     <h3 class="step-title">Delivery</h3>
-                    <p class="step-desc">Your case ships within 6-8 weeks. Track your order every step of the way.</p>
+                    <p class="step-desc">Your case ships within 6–8 weeks. Track your order every step of the way.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Upcoming Drops -->
+    <!-- UPCOMING DROPS -->
     <section class="drops" id="drops">
         <div class="drops-container">
-            <div class="section-header fade-in">
+            <div class="section-header">
                 <span class="section-label">Next Release</span>
                 <h2 class="section-title">Upcoming Drop</h2>
                 <p class="section-subtitle">Get notified when new designs go live.</p>
             </div>
 
-            <div class="countdown-box fade-in">
+            <div class="countdown-box">
                 <div class="countdown-glow"></div>
                 <div class="countdown-content">
                     <span class="countdown-label">Dropping Soon</span>
                     <h3 class="countdown-title">PIXEL NOSTALGIA</h3>
-                    <p class="countdown-subtitle">4 retro-inspired designs for your collection</p>
+                    <p class="countdown-subtitle">4 retro-inspired designs for your collection.</p>
                     <div class="countdown-timer" id="countdown">
                         <div class="countdown-item">
                             <span class="countdown-value" id="days">14</span>
@@ -1715,47 +1511,47 @@
         </div>
     </section>
 
-    <!-- Features Section -->
+    <!-- FEATURES -->
     <section class="features" id="about">
         <div class="features-container">
-            <div class="section-header fade-in">
+            <div class="section-header">
                 <span class="section-label">Why NXMB</span>
                 <h2 class="section-title">Built for Gamers</h2>
                 <p class="section-subtitle">Every detail matters when protecting your investment.</p>
             </div>
 
             <div class="features-grid">
-                <div class="feature-card fade-in">
+                <div class="feature-card">
                     <div class="feature-icon">🎨</div>
                     <h3 class="feature-title">Original Designs</h3>
                     <p class="feature-desc">Every pattern is created exclusively for NXMB. No generic stock images. No knockoffs.</p>
                 </div>
 
-                <div class="feature-card fade-in">
+                <div class="feature-card">
                     <div class="feature-icon">🌡️</div>
                     <h3 class="feature-title">Heat Optimized</h3>
                     <p class="feature-desc">Precision ventilation cutouts keep your device cool during extended play sessions.</p>
                 </div>
 
-                <div class="feature-card fade-in">
+                <div class="feature-card">
                     <div class="feature-icon">💎</div>
                     <h3 class="feature-title">Limited Editions</h3>
                     <p class="feature-desc">Small batch releases mean you'll own something unique. Designs never restock.</p>
                 </div>
 
-                <div class="feature-card fade-in">
+                <div class="feature-card">
                     <div class="feature-icon">🛡️</div>
                     <h3 class="feature-title">Premium Protection</h3>
                     <p class="feature-desc">Shock-absorbing materials protect your device from drops and daily wear.</p>
                 </div>
 
-                <div class="feature-card fade-in">
+                <div class="feature-card">
                     <div class="feature-icon">✋</div>
                     <h3 class="feature-title">Ergonomic Grip</h3>
                     <p class="feature-desc">Textured surfaces and contoured design for comfortable extended gaming.</p>
                 </div>
 
-                <div class="feature-card fade-in">
+                <div class="feature-card">
                     <div class="feature-icon">📦</div>
                     <h3 class="feature-title">Worldwide Shipping</h3>
                     <p class="feature-desc">We ship to most countries. Full tracking included with every order.</p>
@@ -1764,22 +1560,22 @@
         </div>
     </section>
 
-    <!-- FAQ Section -->
+    <!-- FAQ -->
     <section class="faq" id="faq">
         <div class="faq-container">
-            <div class="section-header fade-in">
+            <div class="section-header">
                 <span class="section-label">Support</span>
                 <h2 class="section-title">Frequently Asked Questions</h2>
             </div>
 
-            <div class="faq-list fade-in">
+            <div class="faq-list">
                 <div class="faq-item">
                     <button class="faq-question">
                         <span>How long does shipping take?</span>
                         <span class="faq-icon">+</span>
                     </button>
                     <div class="faq-answer">
-                        <p>Pre-orders ship within 6-8 weeks after the order window closes. In-stock items ship within 3-5 business days. International delivery typically takes an additional 7-14 days depending on your location.</p>
+                        <p>Pre-orders ship within 6–8 weeks after the order window closes. In-stock items ship within 3–5 business days. International delivery typically takes an additional 7–14 days depending on your location.</p>
                     </div>
                 </div>
 
@@ -1826,12 +1622,12 @@
         </div>
     </section>
 
-    <!-- Newsletter Section -->
+    <!-- NEWSLETTER -->
     <section class="newsletter">
-        <div class="newsletter-container fade-in">
+        <div class="newsletter-container">
             <span class="section-label">Stay Updated</span>
-            <h2>Get Early Access</h2>
-            <p>Join our list for exclusive drops, early access, and member-only discounts. No spam, ever.</p>
+            <h2 class="section-title">Get Early Access</h2>
+            <p class="section-subtitle">Join our list for exclusive drops, early access, and member-only discounts. No spam, ever.</p>
             <form class="newsletter-form">
                 <input type="email" class="newsletter-input" placeholder="Enter your email">
                 <button type="submit" class="newsletter-btn">Subscribe</button>
@@ -1839,12 +1635,12 @@
         </div>
     </section>
 
-    <!-- Footer -->
+    <!-- FOOTER -->
     <footer>
         <div class="footer-container">
             <div class="footer-grid">
                 <div class="footer-brand">
-                    <a href="#" class="logo">NXMB</a>
+                    <a href="#" class="logo sekuya-regular"><span>NXMB</span></a>
                     <p>Premium cases for handheld gaming. Limited drops, original artwork, built for gamers.</p>
                     <div class="footer-social">
                         <a href="#" class="social-link">𝕏</a>
@@ -1856,17 +1652,17 @@
                 <div class="footer-column">
                     <h4>Shop</h4>
                     <ul>
-                        <li><a href="#">All Products</a></li>
-                        <li><a href="#">Steam Deck</a></li>
-                        <li><a href="#">ROG Ally</a></li>
-                        <li><a href="#">Accessories</a></li>
+                        <li><a href="#products">All Products</a></li>
+                        <li><a href="#devices">Steam Deck</a></li>
+                        <li><a href="#devices">ROG Ally</a></li>
+                        <li><a href="#products">Accessories</a></li>
                     </ul>
                 </div>
                 <div class="footer-column">
                     <h4>Company</h4>
                     <ul>
-                        <li><a href="#">About Us</a></li>
-                        <li><a href="#">Contact</a></li>
+                        <li><a href="#about">About Us</a></li>
+                        <li><a href="#contact">Contact</a></li>
                         <li><a href="#">Careers</a></li>
                         <li><a href="#">Press</a></li>
                     </ul>
@@ -1874,7 +1670,7 @@
                 <div class="footer-column">
                     <h4>Support</h4>
                     <ul>
-                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#faq">FAQ</a></li>
                         <li><a href="#">Shipping</a></li>
                         <li><a href="#">Returns</a></li>
                         <li><a href="#">Track Order</a></li>
@@ -1892,7 +1688,7 @@
     </footer>
 
     <script>
-        // === Animated background: subtle tech lines + soft nodes ===
+        // === Animated background: nodes + pulses (NO zig-zag lines) ===
         const canvas = document.getElementById('gridCanvas');
         const ctx = canvas.getContext('2d');
 
@@ -1937,7 +1733,7 @@
                 }
             }
 
-            // connect each node to its right/down/diagonal neighbours – but not all of them
+            // Connect each node to some neighbours
             for (let i = 0; i < cols; i++) {
                 for (let j = 0; j < rows; j++) {
                     const idx = i * rows + j;
@@ -1954,26 +1750,10 @@
             }
         }
 
-        function initCircuitLines() {
-            circuitLines = [];
-            const count = Math.max(4, Math.floor(width / 320));
-
-            for (let i = 0; i < count; i++) {
-                const baseX = (width / (count + 1)) * (i + 1) + (Math.random() - 0.5) * 80;
-                circuitLines.push({
-                    baseX,
-                    offset: Math.random() * height * 2,
-                    speed: 0.25 + Math.random() * 0.35,
-                    segmentLength: height / 6 + Math.random() * 40,
-                    wiggle: 18 + Math.random() * 14
-                });
-            }
-        }
-
         function createPulse(x, y, opts = {}) {
-            const startNode = nodes[Math.floor(Math.random() * nodes.length)];
-            const px = x ?? startNode.x;
-            const py = y ?? startNode.y;
+            const randomNode = nodes[Math.floor(Math.random() * nodes.length)];
+            const px = x ?? randomNode.x;
+            const py = y ?? randomNode.y;
 
             pulses.push({
                 x: px,
@@ -1984,17 +1764,16 @@
             });
         }
 
-        function animate() {
+        function render() {
             ctx.clearRect(0, 0, width, height);
             ctx.fillStyle = 'rgba(5,5,14,0.96)';
             ctx.fillRect(0, 0, width, height);
 
-            // create new pulses occasionally
+            // random pulses
             if (Math.random() < 0.012) {
                 createPulse();
             }
 
-            // update pulses & energise nearby nodes
             pulses = pulses.filter(pulse => {
                 pulse.radius += pulse.speed;
                 const life = pulse.radius / pulse.maxRadius;
@@ -2011,7 +1790,7 @@
                 return pulse.radius < pulse.maxRadius;
             });
 
-            // draw node connections
+            // connections
             nodes.forEach(node => {
                 node.connections.forEach(other => {
                     const energy = (node.energy + other.energy) * 0.5;
@@ -2031,38 +1810,37 @@
                     ctx.stroke();
                 });
 
-                // decay energy
                 node.energy *= 0.94;
             });
 
-            // draw nodes
+            // nodes
             nodes.forEach(node => {
                 const size = 1 + node.energy * 2;
                 const alpha = 0.05 + node.energy * 0.45;
 
                 ctx.beginPath();
                 ctx.arc(node.x, node.y, size, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(148, 163, 184, ${alpha * 0.4})`;
 
                 if (node.energy > 0.1) {
                     ctx.fillStyle = `rgba(0, 255, 136, ${alpha})`;
                     ctx.shadowColor = 'rgba(0,255,136,0.65)';
                     ctx.shadowBlur = 12 * node.energy;
                 } else {
+                    ctx.fillStyle = `rgba(148, 163, 184, ${alpha * 0.4})`;
                     ctx.shadowBlur = 0;
                 }
 
                 ctx.fill();
             });
 
-            requestAnimationFrame(animate);
+            requestAnimationFrame(render);
         }
 
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
-        animate();
+        render();
 
-        // Mouse interaction - subtle pulse on move
+        // Mouse interaction
         let lastMousePulse = 0;
         document.addEventListener('mousemove', (e) => {
             const now = Date.now();
@@ -2089,24 +1867,6 @@
             }
         });
 
-        // Scroll animations
-        const fadeElements = document.querySelectorAll('.fade-in');
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach((entry, index) => {
-                if (entry.isIntersecting) {
-                    setTimeout(() => {
-                        entry.target.classList.add('visible');
-                    }, index * 100);
-                }
-            });
-        }, {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        });
-
-        fadeElements.forEach(el => observer.observe(el));
-
         // FAQ Accordion
         document.querySelectorAll('.faq-question').forEach(button => {
             button.addEventListener('click', () => {
@@ -2123,71 +1883,72 @@
             });
         });
 
-        // Countdown Timer with animation
+        // Countdown Timer – fixed target date (14 days + 8 hours from first load)
         let lastSeconds = -1;
         let lastMinutes = -1;
         let lastHours = -1;
         let lastDays = -1;
 
-           function updateCountdown() {
-    const now = new Date();
-    const diff = targetDate.getTime() - now.getTime();
+        const targetDate = (() => {
+            const d = new Date();
+            d.setDate(d.getDate() + 14);
+            d.setHours(d.getHours() + 8);
+            return d;
+        })();
 
-    const daysEl = document.getElementById('days');
-    const hoursEl = document.getElementById('hours');
-    const minutesEl = document.getElementById('minutes');
-    const secondsEl = document.getElementById('seconds');
+        function updateCountdown() {
+            const now = new Date();
+            const diff = targetDate.getTime() - now.getTime();
 
-    if (!daysEl || !hoursEl || !minutesEl || !secondsEl) return;
+            const daysEl = document.getElementById('days');
+            const hoursEl = document.getElementById('hours');
+            const minutesEl = document.getElementById('minutes');
+            const secondsEl = document.getElementById('seconds');
 
-    if (diff <= 0) {
-        // countdown finished
-        daysEl.textContent = "00";
-        hoursEl.textContent = "00";
-        minutesEl.textContent = "00";
-        secondsEl.textContent = "00";
-        return;
-    }
+            if (!daysEl || !hoursEl || !minutesEl || !secondsEl) return;
 
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor(
-        (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-    );
-    const minutes = Math.floor(
-        (diff % (1000 * 60 * 60)) / (1000 * 60)
-    );
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            if (diff <= 0) {
+                daysEl.textContent = "00";
+                hoursEl.textContent = "00";
+                minutesEl.textContent = "00";
+                secondsEl.textContent = "00";
+                return;
+            }
 
-    if (seconds !== lastSeconds) {
-        secondsEl.classList.add('changing');
-        setTimeout(() => secondsEl.classList.remove('changing'), 300);
-        lastSeconds = seconds;
-    }
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-    if (minutes !== lastMinutes) {
-        minutesEl.classList.add('changing');
-        setTimeout(() => minutesEl.classList.remove('changing'), 300);
-        lastMinutes = minutes;
-    }
+            if (seconds !== lastSeconds) {
+                secondsEl.classList.add('changing');
+                setTimeout(() => secondsEl.classList.remove('changing'), 300);
+                lastSeconds = seconds;
+            }
 
-    if (hours !== lastHours) {
-        hoursEl.classList.add('changing');
-        setTimeout(() => hoursEl.classList.remove('changing'), 300);
-        lastHours = hours;
-    }
+            if (minutes !== lastMinutes) {
+                minutesEl.classList.add('changing');
+                setTimeout(() => minutesEl.classList.remove('changing'), 300);
+                lastMinutes = minutes;
+            }
 
-    if (days !== lastDays) {
-        daysEl.classList.add('changing');
-        setTimeout(() => daysEl.classList.remove('changing'), 300);
-        lastDays = days;
-    }
+            if (hours !== lastHours) {
+                hoursEl.classList.add('changing');
+                setTimeout(() => hoursEl.classList.remove('changing'), 300);
+                lastHours = hours;
+            }
 
-    daysEl.textContent = String(days).padStart(2, '0');
-    hoursEl.textContent = String(hours).padStart(2, '0');
-    minutesEl.textContent = String(minutes).padStart(2, '0');
-    secondsEl.textContent = String(seconds).padStart(2, '0');
-}
+            if (days !== lastDays) {
+                daysEl.classList.add('changing');
+                setTimeout(() => daysEl.classList.remove('changing'), 300);
+                lastDays = days;
+            }
 
+            daysEl.textContent = String(days).padStart(2, '0');
+            hoursEl.textContent = String(hours).padStart(2, '0');
+            minutesEl.textContent = String(minutes).padStart(2, '0');
+            secondsEl.textContent = String(seconds).padStart(2, '0');
+        }
 
         updateCountdown();
         setInterval(updateCountdown, 1000);
@@ -2204,7 +1965,7 @@
                 const ripple = document.createElement('span');
                 ripple.style.cssText = `
                     position: absolute;
-                    background: rgba(255,255,255,0.3);
+                    background: rgba(255,255,255,0.25);
                     border-radius: 50%;
                     pointer-events: none;
                     width: 100px;
@@ -2223,7 +1984,6 @@
             });
         });
 
-        // Ripple keyframes
         const style = document.createElement('style');
         style.textContent = `
             @keyframes ripple {
@@ -2235,7 +1995,7 @@
         `;
         document.head.appendChild(style);
 
-        // Smooth scroll for nav links
+        // Smooth scroll for nav anchors
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function(e) {
                 const target = document.querySelector(this.getAttribute('href'));
