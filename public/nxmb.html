@@ -279,54 +279,67 @@
         }
 
         /* HERO */
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 8rem 2rem 4rem;
-            position: relative;
-        }
+       .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 8rem 2rem 4rem;
+    position: relative;
+}
 
-        .hero-badge {
-            font-size: 0.8rem;
-            font-weight: 400;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            color: var(--neon-green);
-            background: rgba(0, 255, 136, 0.1);
-            border: 1px solid rgba(0, 255, 136, 0.3);
-            padding: 0.6rem 1.5rem;
-            margin-bottom: 2rem;
-        }
+.hero-badge {
+    font-size: 0.8rem;
+    font-weight: 400;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--neon-green);
+    background: rgba(0, 255, 136, 0.1);
+    border: 1px solid rgba(0, 255, 136, 0.3);
+    padding: 0.6rem 1.5rem;
+    margin-bottom: 2rem;
+}
 
-        .hero h1 {
-            font-size: clamp(2.5rem, 8vw, 5.2rem);
-            font-weight: 900;
-            margin-bottom: 1.5rem;
-            max-width: 900px;
-        }
+.hero h1 {
+    font-size: clamp(2.4rem, 6vw, 4.6rem);
+    font-weight: 900;
+    margin-bottom: 1.5rem;
+    max-width: 24ch;          /* keeps lines balanced */
+    line-height: 1.15;
+}
 
-        .hero .highlight {
-            color: var(--neon-green);
-            text-shadow: 0 0 30px var(--neon-green-glow);
-        }
+.hero .highlight {
+    color: var(--neon-green);
+    text-shadow: 0 0 30px var(--neon-green-glow);
+}
 
-        .hero-subtitle {
-            font-size: 1.05rem;
-            color: var(--text-gray);
-            max-width: 550px;
-            margin-bottom: 2.5rem;
-        }
+.hero-subtitle {
+    font-size: 1rem;
+    color: var(--text-gray);
+    max-width: 38ch;          /* tighter line length */
+    margin-bottom: 2.5rem;
+    line-height: 1.6;
+}
 
-        .hero-cta {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
+.hero-subtitle--accent {
+    margin-top: 0.75rem;
+    color: var(--neon-green);
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+}
+
+
+.hero-cta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
 
         .btn-primary,
         .btn-secondary {
@@ -475,19 +488,27 @@
             box-shadow: 0 24px 80px rgba(0,255,136,0.18);
         }
 
-        .device-logo {
-            height: 50px;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+       .device-logo {
+    width: 180px;              /* consistent width */
+    height: 48px;              /* consistent height */
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
-        .device-logo img {
-            max-height: 100%;
-            width: auto;
-            object-fit: contain;
-        }
+/* All logos scale nicely inside the box */
+.device-logo img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+/* Legion is visually heavier → scale it down slightly */
+.device-logo--legion img {
+    transform: scale(0.9);     /* tweak 0.8–0.95 if needed */
+}
 
         .device-name {
             font-family: 'Orbitron', monospace;
@@ -647,46 +668,125 @@
             padding: 6rem 2rem;
         }
 
-        .how-container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
+        /* Make container a positioning context */
+.how-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    position: relative;        /* NEW */
+}
 
-        .steps-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 2rem;
-            margin-top: 3rem;
-        }
+/* Keep your 3-column grid */
+.steps-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    margin-top: 3rem;
+    position: relative;
+    z-index: 2;                /* sit above the SVG */
+}
 
-        .step-card {
-            text-align: center;
-            padding: 2rem 1.5rem;
-        }
+/* Curved connector behind the steps */
+.how-connector {
+    position: absolute;
+    inset: 80px 4%;            /* top + side padding */
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.6;
+}
 
-        .step-number {
-            font-family: 'Orbitron', monospace;
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--dark-bg);
-            background: var(--neon-green);
-            width: 50px;
-            height: 50px;
-            border-radius: 999px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1.5rem;
-        }
+.how-connector svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
 
-        .step-title {
-            font-size: 1rem;
-            margin-bottom: 0.75rem;
-        }
+/* Animated dashed line */
+.how-connector-path {
+    fill: none;
+    stroke: rgba(0, 255, 136, 0.35);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-dasharray: 10 12;
+    filter: drop-shadow(0 0 8px rgba(0, 255, 136, 0.6));
+    animation: connectorDash 8s linear infinite;
+}
 
-        .step-desc {
-            font-size: 0.85rem;
-        }
+@keyframes connectorDash {
+    0%   { stroke-dashoffset: 0; }
+    100% { stroke-dashoffset: -200; }
+}
+
+/* Glowing nodes under each step */
+.how-connector-node {
+    fill: var(--neon-green);
+    filter: drop-shadow(0 0 10px rgba(0,255,136,0.9));
+    animation: nodePulse 2.6s ease-in-out infinite;
+}
+
+.how-connector-node:nth-child(2) { animation-delay: 0.3s; }
+.how-connector-node:nth-child(3) { animation-delay: 0.6s; }
+
+@keyframes nodePulse {
+    0%, 100% { r: 5; opacity: 0.5; }
+    50%      { r: 7; opacity: 1; }
+}
+
+/* Slightly more premium step cards */
+.step-card {
+    text-align: center;
+    padding: 2rem 1.7rem;
+    position: relative;
+    border-radius: 18px;
+    background: radial-gradient(circle at top, rgba(15,23,42,0.95) 0%, rgba(2,6,23,0.95) 60%, rgba(2,6,23,0.98) 100%);
+    border: 1px solid rgba(15,23,42,0.9);
+    box-shadow: 0 18px 45px rgba(15,23,42,0.8);
+    overflow: hidden;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.step-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top, rgba(0,255,136,0.06), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.step-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(0,255,136,0.5);
+    box-shadow: 0 24px 70px rgba(0,255,136,0.16);
+}
+
+.step-card:hover::before {
+    opacity: 1;
+}
+
+.step-number {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--dark-bg);
+    background: var(--neon-green);
+    width: 50px;
+    height: 50px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    box-shadow:
+        0 0 0 1px rgba(16,185,129,0.8),
+        0 0 25px rgba(16,185,129,0.9);
+}
+
+/* Hide the connector on mobile (steps stack vertically) */
+@media (max-width: 900px) {
+    .how-connector {
+        display: none;
+    }
+}
 
         /* DROPS / COUNTDOWN */
         .drops {
@@ -1180,58 +1280,71 @@
             }
         }
 
-        @media (max-width: 768px) {
-            nav {
-                padding: 1rem;
-            }
-            .nav-links { display: none; }
-            .mobile-toggle { display: flex; }
+       @media (max-width: 768px) {
+    nav {
+        padding: 1rem;
+    }
 
-            .hero {
-                padding-top: 7rem;
-            }
+    .nav-links { 
+        display: none; 
+    }
 
-            .hero h1 {
-                font-size: 2.2rem;
-            }
+    .mobile-toggle { 
+        display: flex; 
+    }
 
-            .hero-cta {
-                flex-direction: column;
-                width: 100%;
-                max-width: 300px;
-            }
+    .hero {
+        padding: 7rem 1.5rem 4rem;  /* side padding tighter */
+    }
 
-            .btn-primary,
-            .btn-secondary {
-                width: 100%;
-            }
+    .hero h1 {
+        font-size: 2rem;   /* smaller on mobile */
+        max-width: 18ch;   /* keeps it to ~2 lines */
+    }
 
-            .devices-grid {
-                gap: 1.75rem;
-            }
+    .hero-subtitle {
+        font-size: 0.9rem;
+        max-width: 32ch;   /* shorter, less wrapping */
+    }
 
-            .device-item {
-                width: 100%;
-            }
+    .hero-cta {
+        flex-direction: column;
+        width: 100%;
+        max-width: 300px;
+    }
 
-            .footer-grid {
-                grid-template-columns: 1fr;
-                text-align: center;
-            }
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+    }
 
-            .footer-brand p {
-                margin: 0 auto;
-            }
+    .devices-grid {
+        gap: 1.75rem;
+    }
 
-            .footer-social {
-                justify-content: center;
-            }
+    .device-item {
+        width: 100%;
+    }
 
-            .footer-bottom {
-                flex-direction: column;
-                text-align: center;
-            }
-        }
+    .footer-grid {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    .footer-brand p {
+        margin: 0 auto;
+    }
+
+    .footer-social {
+        justify-content: center;
+    }
+
+    .footer-bottom {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
 
         /* Loader */
         .loader {
@@ -1298,10 +1411,18 @@
     <!-- HERO -->
     <section class="hero">
         <span class="hero-badge">PRE-ORDERS OPEN</span>
-        <h1>Premium Cases for <span class="highlight">Handheld Gaming</span></h1>
+        <h1>
+  Premium Cases for<br>
+  <span class="highlight">Handheld Gaming</span>
+</h1>
+
         <p class="hero-subtitle">
-            Limited edition artwork meets serious protection. Exclusive drops for Steam Deck, ROG Ally, and Legion Go. Stand out from the crowd.
-        </p>
+    Limited edition artwork meets serious protection. Exclusive drops for Steam Deck, ROG Ally, and Legion Go.
+</p>
+<p class="hero-subtitle hero-subtitle--accent">
+    Stand out from the crowd.
+</p>
+
         <div class="hero-cta">
             <button class="btn-primary">Shop Collection</button>
             <button class="btn-secondary">View Lookbook</button>
@@ -1327,42 +1448,43 @@
 
     <!-- DEVICES -->
     <section class="devices" id="devices">
-        <div class="devices-container">
-            <div class="section-header">
-                <span class="section-label">Compatibility</span>
-                <h2 class="section-title">Supported Devices</h2>
-                <p class="section-subtitle">Precision-fit cases designed for your favorite handhelds.</p>
+    <div class="devices-container">
+        <div class="section-header">
+            <span class="section-label">Compatibility</span>
+            <h2 class="section-title">Supported Devices</h2>
+            <p class="section-subtitle">Precision-fit cases designed for your favorite handhelds.</p>
+        </div>
+        <div class="devices-grid">
+            <div class="device-item">
+                <div class="device-logo">
+                    <!-- White Steam Deck logo -->
+                    <img src="/Steam_Deck_white_logo.png" alt="Steam Deck logo">
+                </div>
+                <h4 class="device-name">Steam Deck</h4>
+                <span class="device-status">Available Now</span>
             </div>
-            <div class="devices-grid">
-                <div class="device-item">
-                    <div class="device-logo">
-                        <!-- White Steam Deck logo -->
-                        <img src="/Steam_Deck_white_logo.png" alt="Steam Deck logo">
-                    </div>
-                    <h4 class="device-name">Steam Deck</h4>
-                    <span class="device-status">Available Now</span>
-                </div>
 
-                <div class="device-item">
-                    <div class="device-logo">
-                        <!-- White ROG Ally logo -->
-                        <img src="/rog-ally-white.png" alt="ROG Ally logo">
-                    </div>
-                    <h4 class="device-name">ROG Ally</h4>
-                    <span class="device-status">Available Now</span>
+            <div class="device-item">
+                <div class="device-logo">
+                    <!-- White ROG Ally logo -->
+                    <img src="/rog-ally-white.png" alt="ROG Ally logo">
                 </div>
+                <h4 class="device-name">ROG Ally</h4>
+                <span class="device-status">Available Now</span>
+            </div>
 
-                <div class="device-item">
-                    <div class="device-logo">
-                        <!-- White Legion Go logo -->
-                        <img src="/legion-go-white.png" alt="Legion Go logo">
-                    </div>
-                    <h4 class="device-name">Legion Go</h4>
-                    <span class="device-status coming">Coming Soon</span>
+            <div class="device-item">
+                <div class="device-logo device-logo--legion">
+                    <!-- White Legion Go logo -->
+                    <img src="/legion-go-white.png" alt="Legion Go logo">
                 </div>
+                <h4 class="device-name">Legion Go</h4>
+                <span class="device-status coming">Coming Soon</span>
             </div>
         </div>
-    </section>
+    </div>
+</section>
+
 
     <!-- PRODUCTS -->
     <section class="section" id="products">
@@ -1378,7 +1500,7 @@
                 <div class="product-image">
                     <span class="product-tag limited">Limited</span>
                     <!-- replace src with your real image -->
-                    <img src="/images/sakura-drift.jpg" alt="SAKURA DRIFT case" class="product-img">
+                    <img src="/images/sakura-drift-transparent.png" alt="SAKURA DRIFT case" class="product-img">
                 </div>
                 <div class="product-content">
                     <h3 class="product-name">SAKURA DRIFT</h3>
@@ -1394,7 +1516,7 @@
             <div class="product-card">
                 <div class="product-image">
                     <span class="product-tag new">New</span>
-                    <img src="/images/neon-circuit.jpg" alt="NEON CIRCUIT case" class="product-img">
+                    <img src="/images/neon-circuit-transparent.png" alt="NEON CIRCUIT case" class="product-img">
                 </div>
                 <div class="product-content">
                     <h3 class="product-name">NEON CIRCUIT</h3>
@@ -1410,7 +1532,7 @@
             <div class="product-card">
                 <div class="product-image">
                     <span class="product-tag">In Stock</span>
-                    <img src="/images/midnight-wave.jpg" alt="MIDNIGHT WAVE case" class="product-img">
+                    <img src="/images/midnight-wave-transparent.png" alt="MIDNIGHT WAVE case" class="product-img">
                 </div>
                 <div class="product-content">
                     <h3 class="product-name">MIDNIGHT WAVE</h3>
@@ -1426,7 +1548,7 @@
             <div class="product-card">
                 <div class="product-image">
                     <span class="product-tag sold-out">Sold Out</span>
-                    <img src="/images/phantom-black.jpg" alt="PHANTOM BLACK case" class="product-img">
+                    <img src="/images/phantom-black-transparent.png" alt="PHANTOM BLACK case" class="product-img">
                 </div>
                 <div class="product-content">
                     <h3 class="product-name">PHANTOM BLACK</h3>
@@ -1442,32 +1564,49 @@
 
     <!-- HOW IT WORKS -->
     <section class="how-it-works" id="how">
-        <div class="how-container">
-            <div class="section-header">
-                <span class="section-label">Process</span>
-                <h2 class="section-title">How It Works</h2>
-                <p class="section-subtitle">Simple pre-order process. No surprises.</p>
-            </div>
+    <div class="how-container">
+        <div class="section-header">
+            <span class="section-label">Process</span>
+            <h2 class="section-title">How It Works</h2>
+            <p class="section-subtitle">Simple pre-order process. No surprises.</p>
+        </div>
 
-            <div class="steps-grid">
-                <div class="step-card">
-                    <span class="step-number">01</span>
-                    <h3 class="step-title">Choose Your Design</h3>
-                    <p class="step-desc">Browse our collection and pick your favorite. Each design is available for limited time only.</p>
-                </div>
-                <div class="step-card">
-                    <span class="step-number">02</span>
-                    <h3 class="step-title">Place Pre-Order</h3>
-                    <p class="step-desc">Secure your case with full payment. Pre-order window is open for 2–3 weeks per drop.</p>
-                </div>
-                <div class="step-card">
-                    <span class="step-number">03</span>
-                    <h3 class="step-title">Delivery</h3>
-                    <p class="step-desc">Your case ships within 6–8 weeks. Track your order every step of the way.</p>
-                </div>
+        <!-- NEW: curved animated connector -->
+        <div class="how-connector" aria-hidden="true">
+            <svg viewBox="0 0 1000 260" preserveAspectRatio="none">
+                <!-- curved line from step 1 → step 3 -->
+                <path
+                    class="how-connector-path"
+                    d="M120 200 C 330 90, 670 90, 880 200" />
+
+                <!-- glowing nodes under each step (approx positions under cards) -->
+                <circle class="how-connector-node" cx="120" cy="200" r="5" />
+                <circle class="how-connector-node" cx="500" cy="160" r="5" />
+                <circle class="how-connector-node" cx="880" cy="200" r="5" />
+            </svg>
+        </div>
+
+        <div class="steps-grid">
+            <!-- your step-card 1 / 2 / 3 stay the same -->
+            <div class="step-card">
+                <span class="step-number">01</span>
+                <h3 class="step-title">Choose Your Design</h3>
+                <p class="step-desc">Browse our collection and pick your favorite. Each design is available for limited time only.</p>
+            </div>
+            <div class="step-card">
+                <span class="step-number">02</span>
+                <h3 class="step-title">Place Pre-Order</h3>
+                <p class="step-desc">Secure your case with full payment. Pre-order window is open for 2–3 weeks per drop.</p>
+            </div>
+            <div class="step-card">
+                <span class="step-number">03</span>
+                <h3 class="step-title">Delivery</h3>
+                <p class="step-desc">Your case ships within 6–8 weeks. Track your order every step of the way.</p>
             </div>
         </div>
-    </section>
+    </div>
+</section>
+
 
     <!-- UPCOMING DROPS -->
     <section class="drops" id="drops">
