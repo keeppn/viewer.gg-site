@@ -142,21 +142,77 @@
             border-bottom: 1px solid var(--card-border);
         }
 
-        .logo {
-            font-family: 'Orbitron', monospace;
-            font-size: 1.8rem;
-            font-weight: 900;
-            letter-spacing: 0.25em;
-            color: var(--neon-green);
-            text-decoration: none;
-            text-shadow: 0 0 20px var(--neon-green-glow);
-            position: relative;
-            transition: all 0.3s ease;
-        }
+     .logo {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.6rem;
+    font-weight: 900;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.45rem 1.9rem 0.45rem 2.2rem;
+    border-radius: 999px;
+    text-decoration: none;
+    color: var(--text-white);
+    background:
+        radial-gradient(circle at 0% 0%, rgba(0, 255, 136, 0.18), transparent 55%),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(3, 7, 18, 0.98));
+    border: 1px solid rgba(148, 163, 184, 0.7);
+    overflow: hidden;
+}
 
-        .logo:hover {
-            text-shadow: 0 0 30px var(--neon-green-glow), 0 0 60px var(--neon-green-glow);
-        }
+.logo span {
+    position: relative;
+    z-index: 1;
+}
+
+/* gradient ink for the text itself */
+.logo {
+    background-clip: padding-box;
+    -webkit-background-clip: padding-box;
+}
+
+.logo::after {
+    content: "NXMB";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    background: linear-gradient(120deg, #e5f9ff, #22c55e, #a855f7);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    letter-spacing: 0.35em;
+}
+
+/* subtle glint sweep on hover */
+.logo::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        120deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.16) 45%,
+        transparent 80%
+    );
+    transform: translateX(-55%);
+    opacity: 0;
+    transition: transform 0.5s ease-out, opacity 0.5s ease-out;
+}
+
+.logo:hover::before {
+    transform: translateX(40%);
+    opacity: 1;
+}
+
+.logo:hover {
+    box-shadow: 0 0 40px rgba(0, 255, 136, 0.25);
+}
 
         .nav-links {
             display: flex;
@@ -472,22 +528,29 @@
         }
 
         .device-logo {
-            height: 64px;
-            width: 220px;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 999px;
-            padding: 0.75rem 1.5rem;
-            background:
-                radial-gradient(circle at 0% 0%, rgba(0,255,136,0.18), transparent 55%),
-                linear-gradient(135deg, #0b0b16, #050509);
-            border: 1px solid rgba(148,163,184,0.4);
-            box-shadow: 0 18px 45px rgba(15,23,42,0.95);
-            overflow: hidden;
-            transition: all 0.35s ease;
-        }
+    height: 64px;
+    width: 220px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 0.75rem 1.5rem;
+    background:
+        radial-gradient(circle at 0% 0%, rgba(0, 255, 136, 0.05), transparent 55%),
+        linear-gradient(135deg, #f9fafb, #e5e7eb); /* light pill */
+    border: 1px solid rgba(148, 163, 184, 0.7);
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.65);
+    overflow: hidden;
+    transition: all 0.35s ease;
+}
+
+.device-item:hover .device-logo {
+    border-color: var(--neon-green);
+    box-shadow: 0 24px 70px rgba(0, 255, 136, 0.22);
+    transform: translateY(-2px);
+}
+
 
         .device-logo img {
             display: block;
@@ -531,6 +594,14 @@
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 1.5rem;
         }
+
+        @media (min-width: 992px) {
+    .products-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)); /* always 2 per row on desktop */
+        max-width: 900px;
+        margin: 0 auto;
+    }
+}
 
         .product-card {
             background: var(--card-bg);
@@ -940,6 +1011,14 @@
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 1.5rem;
         }
+
+      @media (min-width: 992px) {
+    .features-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr)); /* 3 columns on desktop */
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+}  
 
         .feature-card {
             padding: 2rem;
@@ -1820,7 +1899,6 @@
         let width, height, dpr;
         let nodes = [];
         let pulses = [];
-        let circuitLines = [];
 
         function resizeCanvas() {
             dpr = window.devicePixelRatio || 1;
@@ -1835,7 +1913,6 @@
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
             initNodes();
-            initCircuitLines();
         }
 
         function initNodes() {
@@ -1911,33 +1988,6 @@
             ctx.clearRect(0, 0, width, height);
             ctx.fillStyle = 'rgba(5,5,14,0.96)';
             ctx.fillRect(0, 0, width, height);
-
-            // animated circuit-like flowing lines
-            circuitLines.forEach(line => {
-                const steps = 8;
-                let x = line.baseX;
-                let y = -height + line.offset;
-
-                ctx.beginPath();
-                ctx.moveTo(x, y);
-
-                for (let i = 0; i < steps; i++) {
-                    y += line.segmentLength / steps;
-                    x += (i % 2 === 0 ? 1 : -0.6) * line.wiggle;
-                    ctx.lineTo(x, y);
-                }
-
-                ctx.strokeStyle = 'rgba(0, 255, 136, 0.11)';
-                ctx.lineWidth = 1.2;
-                ctx.shadowColor = 'rgba(0, 255, 136, 0.25)';
-                ctx.shadowBlur = 12;
-                ctx.stroke();
-
-                line.offset += line.speed;
-                if (line.offset > height * 2) {
-                    line.offset = 0;
-                }
-            });
 
             // create new pulses occasionally
             if (Math.random() < 0.012) {
@@ -2079,53 +2129,65 @@
         let lastHours = -1;
         let lastDays = -1;
 
-        function updateCountdown() {
-            const targetDate = new Date();
-            targetDate.setDate(targetDate.getDate() + 14);
-            targetDate.setHours(targetDate.getHours() + 8);
+           function updateCountdown() {
+    const now = new Date();
+    const diff = targetDate.getTime() - now.getTime();
 
-            const now = new Date();
-            const diff = targetDate - now;
+    const daysEl = document.getElementById('days');
+    const hoursEl = document.getElementById('hours');
+    const minutesEl = document.getElementById('minutes');
+    const secondsEl = document.getElementById('seconds');
 
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    if (!daysEl || !hoursEl || !minutesEl || !secondsEl) return;
 
-            const daysEl = document.getElementById('days');
-            const hoursEl = document.getElementById('hours');
-            const minutesEl = document.getElementById('minutes');
-            const secondsEl = document.getElementById('seconds');
+    if (diff <= 0) {
+        // countdown finished
+        daysEl.textContent = "00";
+        hoursEl.textContent = "00";
+        minutesEl.textContent = "00";
+        secondsEl.textContent = "00";
+        return;
+    }
 
-            if (seconds !== lastSeconds) {
-                secondsEl.classList.add('changing');
-                setTimeout(() => secondsEl.classList.remove('changing'), 300);
-                lastSeconds = seconds;
-            }
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor(
+        (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+    );
+    const minutes = Math.floor(
+        (diff % (1000 * 60 * 60)) / (1000 * 60)
+    );
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-            if (minutes !== lastMinutes) {
-                minutesEl.classList.add('changing');
-                setTimeout(() => minutesEl.classList.remove('changing'), 300);
-                lastMinutes = minutes;
-            }
+    if (seconds !== lastSeconds) {
+        secondsEl.classList.add('changing');
+        setTimeout(() => secondsEl.classList.remove('changing'), 300);
+        lastSeconds = seconds;
+    }
 
-            if (hours !== lastHours) {
-                hoursEl.classList.add('changing');
-                setTimeout(() => hoursEl.classList.remove('changing'), 300);
-                lastHours = hours;
-            }
+    if (minutes !== lastMinutes) {
+        minutesEl.classList.add('changing');
+        setTimeout(() => minutesEl.classList.remove('changing'), 300);
+        lastMinutes = minutes;
+    }
 
-            if (days !== lastDays) {
-                daysEl.classList.add('changing');
-                setTimeout(() => daysEl.classList.remove('changing'), 300);
-                lastDays = days;
-            }
+    if (hours !== lastHours) {
+        hoursEl.classList.add('changing');
+        setTimeout(() => hoursEl.classList.remove('changing'), 300);
+        lastHours = hours;
+    }
 
-            daysEl.textContent = String(days).padStart(2, '0');
-            hoursEl.textContent = String(hours).padStart(2, '0');
-            minutesEl.textContent = String(minutes).padStart(2, '0');
-            secondsEl.textContent = String(seconds).padStart(2, '0');
-        }
+    if (days !== lastDays) {
+        daysEl.classList.add('changing');
+        setTimeout(() => daysEl.classList.remove('changing'), 300);
+        lastDays = days;
+    }
+
+    daysEl.textContent = String(days).padStart(2, '0');
+    hoursEl.textContent = String(hours).padStart(2, '0');
+    minutesEl.textContent = String(minutes).padStart(2, '0');
+    secondsEl.textContent = String(seconds).padStart(2, '0');
+}
+
 
         updateCountdown();
         setInterval(updateCountdown, 1000);
