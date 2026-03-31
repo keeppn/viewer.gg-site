@@ -4,6 +4,7 @@ import { useRef, useEffect, useState, useCallback } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "@studio-freight/lenis";
+import { generateBroksVisionPPTX } from "./export-pptx";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -59,6 +60,23 @@ export default function BroksVisionPage() {
   const footerCardsRef = useRef<(HTMLDivElement | null)[]>([]);
 
   const [mounted, setMounted] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportDone, setExportDone] = useState(false);
+
+  const handleExportPPTX = useCallback(async () => {
+    if (exporting) return;
+    setExporting(true);
+    setExportDone(false);
+    try {
+      await generateBroksVisionPPTX();
+      setExportDone(true);
+      setTimeout(() => setExportDone(false), 3000);
+    } catch (err) {
+      console.error("PPTX export failed:", err);
+    } finally {
+      setExporting(false);
+    }
+  }, [exporting]);
 
   // ─── LENIS SMOOTH SCROLL ───
   useEffect(() => {
@@ -1209,11 +1227,86 @@ export default function BroksVisionPage() {
         </div>
       </footer>
 
+      {/* ═══ FLOATING EXPORT BUTTON ═══ */}
+      <button
+        onClick={handleExportPPTX}
+        disabled={exporting}
+        style={{
+          position: "fixed",
+          bottom: "32px",
+          right: "32px",
+          zIndex: 9999,
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          padding: exporting ? "16px 28px" : "16px 24px",
+          borderRadius: "100px",
+          border: `1px solid ${exportDone ? "#22c55e" : "rgba(255,255,255,0.12)"}`,
+          background: exportDone
+            ? "rgba(34,197,94,0.15)"
+            : exporting
+              ? "rgba(239,131,22,0.1)"
+              : "rgba(10,10,15,0.85)",
+          backdropFilter: "blur(16px)",
+          color: exportDone ? "#22c55e" : B.white,
+          fontSize: "13px",
+          fontWeight: 600,
+          fontFamily: "inherit",
+          cursor: exporting ? "wait" : "pointer",
+          transition: "all 0.4s cubic-bezier(0.22, 1, 0.36, 1)",
+          boxShadow: exportDone
+            ? "0 0 30px rgba(34,197,94,0.2)"
+            : "0 4px 24px rgba(0,0,0,0.4)",
+          transform: "translateY(0)",
+        }}
+        onMouseEnter={(e) => {
+          if (!exporting) e.currentTarget.style.transform = "translateY(-2px)";
+          if (!exporting && !exportDone) e.currentTarget.style.borderColor = B.orange;
+          if (!exporting && !exportDone) e.currentTarget.style.boxShadow = `0 4px 30px ${B.orange}30`;
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "translateY(0)";
+          if (!exportDone) e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
+          if (!exportDone) e.currentTarget.style.boxShadow = "0 4px 24px rgba(0,0,0,0.4)";
+        }}
+      >
+        {exporting ? (
+          <>
+            {/* Spinner */}
+            <svg width="16" height="16" viewBox="0 0 24 24" style={{ animation: "spin 1s linear infinite" }}>
+              <circle cx="12" cy="12" r="10" fill="none" stroke={B.orange} strokeWidth="2.5" strokeDasharray="31.4 31.4" strokeLinecap="round" />
+            </svg>
+            Generating...
+          </>
+        ) : exportDone ? (
+          <>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 6L9 17l-5-5" />
+            </svg>
+            Downloaded!
+          </>
+        ) : (
+          <>
+            {/* Download icon */}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Export PPTX
+          </>
+        )}
+      </button>
+
       {/* Keyframes */}
       <style>{`
         @keyframes pulse {
           0%, 100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.5; transform: scale(1.2); }
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
         @keyframes scrollPulse {
           0% { transform: scaleY(0); transform-origin: top; }
