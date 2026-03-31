@@ -818,12 +818,17 @@ export default function BroksVisionPage() {
       if (pacmanRef.current && pacmanPathRef.current) {
         const path = pacmanPathRef.current;
         const pathLength = path.getTotalLength();
-        const eatenPath = document.querySelector(".pacman-eaten-path") as SVGPathElement;
-        if (eatenPath) {
-          const eatenLength = eatenPath.getTotalLength();
-          eatenPath.style.strokeDasharray = `${eatenLength}`;
-          eatenPath.style.strokeDashoffset = `${eatenLength}`;
-        }
+
+        // Set up the dotted trail — dots ahead of pac-man are visible, behind = gone.
+        // Technique: dynamically update stroke-dasharray so the eaten portion is one
+        // big invisible gap, then the remaining path shows the normal dot pattern.
+        const DOT_SIZE = 0.5;
+        const DOT_GAP = 1.2;
+
+        // Initial state: all dots visible
+        path.style.strokeDasharray = `${DOT_SIZE} ${DOT_GAP}`;
+        path.style.strokeDashoffset = "0";
+
         let prevPoint = { x: 0, y: 0 };
 
         ScrollTrigger.create({
@@ -851,10 +856,18 @@ export default function BroksVisionPage() {
             pacmanRef.current.style.transform = `translate(${screenX}px, ${screenY}px) rotate(${angle}deg)`;
             pacmanRef.current.style.opacity = progress > 0.01 && progress < 0.99 ? "0.18" : "0";
 
-            // "Eat" the dots — reveal the black overlay path behind pac-man
-            if (eatenPath) {
-              const eatenLength = eatenPath.getTotalLength();
-              eatenPath.style.strokeDashoffset = `${eatenLength * (1 - progress)}`;
+            // "Eat" the dots — make eaten portion invisible by rebuilding dasharray:
+            // Pattern: [0 (invisible dash), eatenLength (invisible gap), 0.5 (dot), 1.2 (gap), ...]
+            // This creates a big transparent gap for the already-traveled path,
+            // then shows the normal dotted pattern for the remaining path ahead.
+            const eatenLength = progress * pathLength;
+            if (eatenLength > 0.01) {
+              // Build: invisible start gap, then repeating dot pattern
+              path.style.strokeDasharray = `0 ${eatenLength} ${DOT_SIZE} ${DOT_GAP}`;
+              path.style.strokeDashoffset = "0";
+            } else {
+              path.style.strokeDasharray = `${DOT_SIZE} ${DOT_GAP}`;
+              path.style.strokeDashoffset = "0";
             }
           },
         });
@@ -1138,15 +1151,6 @@ export default function BroksVisionPage() {
           stroke={`${B.orange}20`}
           strokeWidth="0.15"
           strokeDasharray="0.5 1.2"
-          strokeLinecap="round"
-        />
-        {/* Eaten portion overlay — covers dots behind pac-man */}
-        <path
-          className="pacman-eaten-path"
-          d="M 85 1 C 85 12, 15 18, 15 32 S 85 42, 85 52 S 15 62, 15 72 S 85 82, 50 99"
-          fill="none"
-          stroke={B.black}
-          strokeWidth="0.4"
           strokeLinecap="round"
         />
       </svg>
