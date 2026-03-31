@@ -814,26 +814,47 @@ export default function BroksVisionPage() {
     const ctx = gsap.context(() => {
       ScrollTrigger.refresh();
 
-      // ═══ SCROLL PAC-MAN ═══
+      // ═══ SCROLL PAC-MAN — eating dots along S-curve ═══
       if (pacmanRef.current && pacmanPathRef.current) {
         const path = pacmanPathRef.current;
         const pathLength = path.getTotalLength();
-        // Animate pac-man along the S-curve SVG path as user scrolls
+        const eatenPath = document.querySelector(".pacman-eaten-path") as SVGPathElement;
+        if (eatenPath) {
+          const eatenLength = eatenPath.getTotalLength();
+          eatenPath.style.strokeDasharray = `${eatenLength}`;
+          eatenPath.style.strokeDashoffset = `${eatenLength}`;
+        }
+        let prevPoint = { x: 0, y: 0 };
+
         ScrollTrigger.create({
           trigger: containerRef.current,
           start: "top top",
           end: "bottom bottom",
-          scrub: 0.5,
+          scrub: 0.3,
           onUpdate: (self) => {
             const progress = self.progress;
             const point = path.getPointAtLength(progress * pathLength);
-            // Convert SVG coordinates to viewport coordinates
-            const svgRect = path.ownerSVGElement?.getBoundingClientRect();
-            if (svgRect && pacmanRef.current) {
-              const scaleX = svgRect.width / 100;
-              const scaleY = svgRect.height / 100;
-              pacmanRef.current.style.transform = `translate(${svgRect.left + point.x * scaleX}px, ${svgRect.top + point.y * scaleY}px) rotate(${progress * 720}deg)`;
-              pacmanRef.current.style.opacity = progress > 0.02 && progress < 0.98 ? "1" : "0";
+            const svgEl = path.ownerSVGElement;
+            if (!svgEl || !pacmanRef.current) return;
+            const svgRect = svgEl.getBoundingClientRect();
+            const scaleX = svgRect.width / 100;
+            const scaleY = svgRect.height / 100;
+            const screenX = svgRect.left + point.x * scaleX;
+            const screenY = svgRect.top + point.y * scaleY;
+
+            // Calculate rotation based on travel direction
+            const dx = point.x - prevPoint.x;
+            const dy = point.y - prevPoint.y;
+            const angle = Math.atan2(dy * scaleY, dx * scaleX) * (180 / Math.PI);
+            prevPoint = { x: point.x, y: point.y };
+
+            pacmanRef.current.style.transform = `translate(${screenX}px, ${screenY}px) rotate(${angle}deg)`;
+            pacmanRef.current.style.opacity = progress > 0.01 && progress < 0.99 ? "0.18" : "0";
+
+            // "Eat" the dots — reveal the black overlay path behind pac-man
+            if (eatenPath) {
+              const eatenLength = eatenPath.getTotalLength();
+              eatenPath.style.strokeDashoffset = `${eatenLength * (1 - progress)}`;
             }
           },
         });
@@ -868,6 +889,18 @@ export default function BroksVisionPage() {
             { opacity: 0, y: 40 },
             { opacity: 1, y: 0, stagger: 0.15, duration: 0.8, ease: "power3.out",
               scrollTrigger: { trigger: introStatsRef.current, start: "top 80%", toggleActions: "play none none reverse" } });
+
+          // Animated number counters
+          introStatsRef.current.querySelectorAll(".stat-number").forEach((el) => {
+            const target = parseInt(el.getAttribute("data-target") || "0");
+            const suffix = el.getAttribute("data-suffix") || "";
+            const obj = { val: 0 };
+            gsap.to(obj, {
+              val: target, duration: 2, ease: "power2.out",
+              scrollTrigger: { trigger: el, start: "top 85%", toggleActions: "play none none reverse" },
+              onUpdate: () => { (el as HTMLElement).textContent = Math.round(obj.val) + suffix; },
+            });
+          });
         }
       }
 
@@ -939,6 +972,22 @@ export default function BroksVisionPage() {
           contentTl.fromTo(tags.children, { opacity: 0, y: 15, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, stagger: 0.04, duration: 0.3, ease: "back.out(1.5)" }, "-=0.15");
         }
 
+        // Draw SVG underlines and circles on chapter titles
+        if (head) {
+          ScrollTrigger.create({
+            trigger: chapter,
+            start: "top 30%",
+            onEnter: () => {
+              head.querySelectorAll(".svg-underline").forEach((el) => el.classList.add("drawn"));
+              head.querySelectorAll(".svg-circle").forEach((el) => el.classList.add("drawn"));
+            },
+            onLeaveBack: () => {
+              head.querySelectorAll(".svg-underline").forEach((el) => el.classList.remove("drawn"));
+              head.querySelectorAll(".svg-circle").forEach((el) => el.classList.remove("drawn"));
+            },
+          });
+        }
+
         gsap.to(content, { opacity: 0, y: -40, ease: "none",
           scrollTrigger: { trigger: chapter, start: "60% top", end: "bottom top", scrub: true } });
         gsap.to(sticky, { y: "-20lvh", ease: "none",
@@ -981,19 +1030,19 @@ export default function BroksVisionPage() {
   }, [mounted]);
 
   const chapters = [
-    { num: "01", label: "Creative", title: "Ideas That Ignite",
+    { num: "01", label: "Creative", title: "Ideas That Ignite", underlineWord: "Ignite", circleWord: "",
       desc: "From campaign concepts to brand identity systems, we design every visual and verbal element of your brand — motion graphics, POSM production, space branding, and video content, all crafted under one roof.",
       tags: ["Campaign Design", "Brand Identity", "Motion & Video", "POSM & Spatial", "Copywriting"],
       bg: B.orange, accent: B.black },
-    { num: "02", label: "PR & Communications", title: "Stories That Spread",
+    { num: "02", label: "PR & Communications", title: "Stories That Spread", underlineWord: "Spread", circleWord: "Stories",
       desc: "Strategic media relations, crisis management, and reputation building across earned, owned, and shared channels. We turn company milestones into industry headlines — backed by 33 years of journalist relationships.",
       tags: ["Media Relations", "Crisis Comms", "Corporate PR", "Influencer Strategy", "Digital PR"],
       bg: B.blue, accent: B.white },
-    { num: "03", label: "Digital", title: "Performance Engineered",
+    { num: "03", label: "Digital", title: "Performance Engineered", underlineWord: "Engineered", circleWord: "",
       desc: "Full-funnel performance across Google, Meta, TikTok, and LinkedIn. We pair data-driven PPC and SEO with AI-powered content, generative engine optimization, and real-time analytics.",
       tags: ["PPC & Paid Social", "SEO & Technical", "AI Marketing", "Social Media", "Analytics"],
       bg: B.black, accent: B.orange },
-    { num: "04", label: "BTL & Activations", title: "Experiences That Move",
+    { num: "04", label: "BTL & Activations", title: "Experiences That Move", underlineWord: "Move", circleWord: "Experiences",
       desc: "On-ground activations that create genuine human connections. From concept and 3D visualization through logistics and digital integration — experiential campaigns that turn audiences into advocates.",
       tags: ["Event Planning", "Activation Design", "Promo Teams", "Media Buying", "Experiential"],
       bg: B.gray, accent: B.cream },
@@ -1044,26 +1093,62 @@ export default function BroksVisionPage() {
         @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.2)} }
         @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
         @keyframes scrollPulse { 0%{transform:scaleY(0);transform-origin:top} 50%{transform:scaleY(1);transform-origin:top} 51%{transform:scaleY(1);transform-origin:bottom} 100%{transform:scaleY(0);transform-origin:bottom} }
-        @keyframes pacmanChomp { 0%,100%{clip-path:polygon(100% 50%,50% 0%,0% 0%,0% 100%,50% 100%,100% 50%)} 50%{clip-path:polygon(100% 50%,50% 15%,0% 0%,0% 100%,50% 85%,100% 50%)} }
+        @keyframes pacmanChomp {
+          0%,100% { d: path("M50,0 A50,50 0 1,1 50,100 A50,50 0 1,1 50,0"); }
+          50% { d: path("M50,15 A50,50 0 1,1 50,85 A50,50 0 1,1 50,15"); }
+        }
+        @keyframes pacmanMouth {
+          0%,100% { clip-path: polygon(100% 50%, 60% 10%, 0% 0%, 0% 100%, 60% 90%); }
+          50% { clip-path: polygon(100% 50%, 55% 30%, 0% 0%, 0% 100%, 55% 70%); }
+        }
+        .pacman-body { animation: pacmanMouth 0.35s ease-in-out infinite; }
         .one-liner-section p { opacity: 0; transform: translateY(40px); }
         .one-liner-section.in-view p { opacity: 1; transform: translateY(0); transition: opacity 0.8s ease-out, transform 0.8s cubic-bezier(0.22,1,0.36,1); }
+        .svg-underline path { stroke-dashoffset: var(--path-length); transition: stroke-dashoffset 1s cubic-bezier(0.22,1,0.36,1); }
+        .svg-underline.drawn path { stroke-dashoffset: 0; }
+        .svg-circle ellipse { stroke-dashoffset: var(--path-length); transition: stroke-dashoffset 1.2s cubic-bezier(0.22,1,0.36,1) 0.3s; }
+        .svg-circle.drawn ellipse { stroke-dashoffset: 0; }
       `}</style>
 
-      {/* ═══ SCROLL PAC-MAN — follows S-curve down the page ═══ */}
+      {/* ═══ SCROLL PAC-MAN — classic pac-man eating dots along S-curve ═══ */}
+      {/* Classic pac-man: big, background layer, eating dots */}
       <div ref={pacmanRef} style={{
-        position: "fixed", top: 0, left: 0, zIndex: 50,
-        width: "32px", height: "32px", pointerEvents: "none",
-        opacity: 0, transition: "opacity 0.3s",
+        position: "fixed", top: 0, left: 0, zIndex: 3,
+        width: "80px", height: "80px", pointerEvents: "none",
+        opacity: 0, transition: "opacity 0.4s",
         transform: "translate(-50%, -50%)",
       }}>
-        <svg viewBox="0 0 100 155" width="32" height="50" style={{ filter: `drop-shadow(0 0 12px ${B.orange}80)` }}>
-          <path d="M 42 45 L 42 75 A 30 30 0 1 1 72 45 Z" fill={B.orange} style={{ animation: "pacmanChomp 0.4s ease-in-out infinite" }} />
-          <path d="M 58 110 L 58 80 A 30 30 0 1 1 28 110 Z" fill={B.orange} style={{ animation: "pacmanChomp 0.4s ease-in-out infinite 0.2s" }} />
-        </svg>
+        {/* Classic pac-man circle with animated mouth */}
+        <div className="pacman-body" style={{
+          width: "80px", height: "80px", borderRadius: "50%",
+          background: B.orange,
+          filter: `drop-shadow(0 0 20px ${B.orange}40)`,
+        }} />
       </div>
-      {/* Hidden SVG path that defines the S-curve route */}
-      <svg style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none", opacity: 0 }} viewBox="0 0 100 100" preserveAspectRatio="none">
-        <path ref={pacmanPathRef} d="M 85 2 C 85 15, 15 20, 15 35 S 85 45, 85 55 S 15 65, 15 75 S 85 85, 85 98" fill="none" />
+      {/* The S-curve path — visible as a dotted trail */}
+      <svg className="pacman-trail-svg" style={{
+        position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
+        pointerEvents: "none", zIndex: 2,
+      }} viewBox="0 0 100 100" preserveAspectRatio="none">
+        {/* Dotted trail path — the dots pac-man eats */}
+        <path
+          ref={pacmanPathRef}
+          d="M 85 1 C 85 12, 15 18, 15 32 S 85 42, 85 52 S 15 62, 15 72 S 85 82, 50 99"
+          fill="none"
+          stroke={`${B.orange}20`}
+          strokeWidth="0.15"
+          strokeDasharray="0.5 1.2"
+          strokeLinecap="round"
+        />
+        {/* Eaten portion overlay — covers dots behind pac-man */}
+        <path
+          className="pacman-eaten-path"
+          d="M 85 1 C 85 12, 15 18, 15 32 S 85 42, 85 52 S 15 62, 15 72 S 85 82, 50 99"
+          fill="none"
+          stroke={B.black}
+          strokeWidth="0.4"
+          strokeLinecap="round"
+        />
       </svg>
 
       {/* ═══ HERO ═══ */}
@@ -1124,9 +1209,9 @@ export default function BroksVisionPage() {
             ))}
           </div>
           <div ref={introStatsRef} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: "32px", marginTop: "80px", paddingTop: "48px", borderTop: "1px solid rgba(255,255,255,.06)" }}>
-            {[{ num: "33", label: "Years" }, { num: "150+", label: "Projects" }, { num: "25", label: "Experts" }, { num: "98%", label: "Retention" }].map((s) => (
+            {[{ num: 33, suffix: "", label: "Years" }, { num: 150, suffix: "+", label: "Projects" }, { num: 25, suffix: "", label: "Experts" }, { num: 98, suffix: "%", label: "Retention" }].map((s) => (
               <div key={s.label} className="stat-item" style={{ textAlign: "center", opacity: 0 }}>
-                <div style={{ fontSize: "clamp(36px,5vw,60px)", fontWeight: 900, letterSpacing: "-.03em", color: B.orange }}>{s.num}</div>
+                <div className="stat-number" data-target={s.num} data-suffix={s.suffix} style={{ fontSize: "clamp(36px,5vw,60px)", fontWeight: 900, letterSpacing: "-.03em", color: B.orange }}>0{s.suffix}</div>
                 <div style={{ fontSize: "12px", letterSpacing: ".2em", textTransform: "uppercase", color: "rgba(255,255,255,.4)", marginTop: "8px" }}>{s.label}</div>
               </div>
             ))}
@@ -1238,8 +1323,26 @@ export default function BroksVisionPage() {
                     <span style={{ width: "28px", height: "28px", borderRadius: "50%", background: ch.accent, color: ch.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 900 }}>{ch.num}</span>
                     <span style={{ fontSize: "13px", fontWeight: 600, letterSpacing: ".15em", textTransform: "uppercase", color: ch.accent }}>{ch.label}</span>
                   </div>
-                  <div ref={(el) => { chapterHeadRefs.current[i] = el; }} style={{ fontSize: "clamp(40px,8vw,100px)", fontWeight: 900, letterSpacing: "-.04em", lineHeight: .9, color: ch.accent, marginBottom: "24px" }}>
-                    {ch.title.split(" ").map((w, wi) => (<span key={wi} className="ch-word" style={{ opacity: 0, marginRight: ".25em" }}>{w}</span>))}
+                  <div ref={(el) => { chapterHeadRefs.current[i] = el; }} style={{ fontSize: "clamp(40px,8vw,100px)", fontWeight: 900, letterSpacing: "-.04em", lineHeight: .95, color: ch.accent, marginBottom: "24px" }}>
+                    {ch.title.split(" ").map((w, wi) => {
+                      const isUnderlined = w === ch.underlineWord;
+                      const isCircled = w === ch.circleWord;
+                      return (
+                        <span key={wi} className="ch-word" style={{ opacity: 0, marginRight: ".25em", position: "relative", display: "inline-block" }}>
+                          {w}
+                          {isUnderlined && (
+                            <svg className="svg-underline" style={{ position: "absolute", bottom: "-5%", left: "-5%", width: "110%", height: "20%", overflow: "visible", pointerEvents: "none" }} viewBox="0 0 200 20" preserveAspectRatio="none">
+                              <path d="M 5 12 Q 40 4, 80 13 T 195 10" fill="none" stroke={ch.accent} strokeWidth="4" strokeLinecap="round" style={{ strokeDasharray: 210, strokeDashoffset: 210, ["--path-length" as string]: 210 }} />
+                            </svg>
+                          )}
+                          {isCircled && (
+                            <svg className="svg-circle" style={{ position: "absolute", top: "-15%", left: "-10%", width: "120%", height: "130%", overflow: "visible", pointerEvents: "none" }} viewBox="0 0 200 100" preserveAspectRatio="none">
+                              <ellipse cx="100" cy="50" rx="95" ry="42" fill="none" stroke={ch.accent} strokeWidth="3" strokeLinecap="round" style={{ strokeDasharray: 440, strokeDashoffset: 440, ["--path-length" as string]: 440 }} transform="rotate(-2 100 50)" />
+                            </svg>
+                          )}
+                        </span>
+                      );
+                    })}
                   </div>
                   <p ref={(el) => { chapterDescRefs.current[i] = el; }} style={{ fontSize: "clamp(16px,1.5vw,20px)", lineHeight: 1.6, color: `${ch.accent}99`, maxWidth: "600px", opacity: 0, marginBottom: "32px" }}>{ch.desc}</p>
                   {/* Service tags */}
