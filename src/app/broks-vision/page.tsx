@@ -29,13 +29,39 @@ const VALID_CREDENTIALS = [
 ];
 
 // ═══════════════════════════════════════════
+// ─── SIMPLEX NOISE (compact implementation) ───
+// Used for flow field organic particle movement
+// ═══════════════════════════════════════════
+const _grad3 = [[1,1,0],[-1,1,0],[1,-1,0],[-1,-1,0],[1,0,1],[-1,0,1],[1,0,-1],[-1,0,-1],[0,1,1],[0,-1,1],[0,1,-1],[0,-1,-1]];
+const _p = [151,160,137,91,90,15,131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,37,240,21,10,23,190,6,148,247,120,234,75,0,26,197,62,94,252,219,203,117,35,11,32,57,177,33,88,237,149,56,87,174,20,125,136,171,168,68,175,74,165,71,134,139,48,27,166,77,146,158,231,83,111,229,122,60,211,133,230,220,105,92,41,55,46,245,40,244,102,143,54,65,25,63,161,1,216,80,73,209,76,132,187,208,89,18,169,200,196,135,130,116,188,159,86,164,100,109,198,173,186,3,64,52,217,226,250,124,123,5,202,38,147,118,126,255,82,85,212,207,206,59,227,47,16,58,17,182,189,28,42,223,183,170,213,119,248,152,2,44,154,163,70,221,153,101,155,167,43,172,9,129,22,39,253,19,98,108,110,79,113,224,232,178,185,112,104,218,246,97,228,251,34,242,193,238,210,144,12,191,179,162,241,81,51,145,235,249,14,239,107,49,192,214,31,181,199,106,157,184,84,204,176,115,121,50,45,127,4,150,254,138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180];
+const _perm = new Array(512);
+const _gi = new Array(512);
+for (let i = 0; i < 512; i++) { _perm[i] = _p[i & 255]; _gi[i] = _perm[i] % 12; }
+function _dot(g: number[], x: number, y: number) { return g[0]*x + g[1]*y; }
+function simplex2D(xin: number, yin: number): number {
+  const F2 = 0.5*(Math.sqrt(3)-1), G2 = (3-Math.sqrt(3))/6;
+  const s = (xin+yin)*F2; const i = Math.floor(xin+s); const j = Math.floor(yin+s);
+  const t = (i+j)*G2; const x0 = xin-(i-t); const y0 = yin-(j-t);
+  const i1 = x0>y0?1:0, j1 = x0>y0?0:1;
+  const x1 = x0-i1+G2, y1 = y0-j1+G2, x2 = x0-1+2*G2, y2 = y0-1+2*G2;
+  const ii = i&255, jj = j&255;
+  let n0=0, n1=0, n2=0;
+  let t0 = 0.5-x0*x0-y0*y0; if(t0>=0){t0*=t0; n0=t0*t0*_dot(_grad3[_gi[ii+_perm[jj]]],x0,y0);}
+  let t1 = 0.5-x1*x1-y1*y1; if(t1>=0){t1*=t1; n1=t1*t1*_dot(_grad3[_gi[ii+i1+_perm[jj+j1]]],x1,y1);}
+  let t2 = 0.5-x2*x2-y2*y2; if(t2>=0){t2*=t2; n2=t2*t2*_dot(_grad3[_gi[ii+1+_perm[jj+1]]],x2,y2);}
+  return 70*(n0+n1+n2);
+}
+
+// ═══════════════════════════════════════════
 // ─── INTERACTIVE CANVAS BACKGROUND ───
-// Neural network / constellation mesh that follows the mouse
+// Flow-field particle system with mouse trail, high density
 // ═══════════════════════════════════════════
 function InteractiveBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const mouseRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
+  const mouseRef = useRef({ x: -999, y: -999, targetX: -999, targetY: -999 });
+  const mouseTrailRef = useRef<{x: number; y: number}[]>([]);
   const animFrameRef = useRef<number>(0);
+  const timeRef = useRef(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -43,38 +69,64 @@ function InteractiveBackground() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     let width = window.innerWidth;
     let height = window.innerHeight;
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width = width + "px";
+    canvas.style.height = height + "px";
+    ctx.scale(dpr, dpr);
 
-    // Particle system
-    const PARTICLE_COUNT = 80;
-    const CONNECTION_DISTANCE = 150;
-    const MOUSE_RADIUS = 200;
+    // ─── SETTINGS ───
+    const PARTICLE_COUNT = 200;
+    const CONNECTION_DISTANCE = 180;
+    const MOUSE_RADIUS = 300;
+    const FLOW_SCALE = 0.003;     // noise zoom
+    const FLOW_SPEED = 0.0004;    // noise time evolution
+    const FLOW_FORCE = 0.15;      // how strongly flow pushes particles
+    const MOUSE_TRAIL_LENGTH = 12;
 
     interface Particle {
       x: number; y: number;
       vx: number; vy: number;
-      baseX: number; baseY: number;
       size: number;
       color: string;
+      glowColor: string;
       alpha: number;
+      layer: number; // 0=back, 1=mid, 2=front (sparkle)
+      pulsePhase: number;
     }
 
     const particles: Particle[] = [];
-    const colors = [B.orange, B.blue, B.orangeLight, B.blueLight, "rgba(255,255,255,0.6)"];
+    const layerColors = [
+      // Back layer: subtle white/blue
+      ["rgba(255,255,255,0.5)", "rgba(100,130,255,0.4)", "rgba(180,180,220,0.3)"],
+      // Mid layer: brand colors
+      [B.orange, B.blue, B.orangeLight, B.blueLight],
+      // Front layer: bright sparkles
+      [B.orange, "#FFFFFF", B.orangeLight],
+    ];
 
     for (let i = 0; i < PARTICLE_COUNT; i++) {
-      const x = Math.random() * width;
-      const y = Math.random() * height;
+      const layer = i < 60 ? 0 : i < 160 ? 1 : 2;
+      const colors = layerColors[layer];
+      const color = colors[Math.floor(Math.random() * colors.length)];
       particles.push({
-        x, y, baseX: x, baseY: y,
-        vx: (Math.random() - 0.5) * 0.5,
-        vy: (Math.random() - 0.5) * 0.5,
-        size: 1.5 + Math.random() * 2.5,
-        color: colors[i % colors.length],
-        alpha: 0.3 + Math.random() * 0.5,
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        size: layer === 0 ? 1 + Math.random() * 1.5
+            : layer === 1 ? 1.5 + Math.random() * 3
+            : 0.8 + Math.random() * 1.2,
+        color,
+        glowColor: layer === 2 ? B.orange : color,
+        alpha: layer === 0 ? 0.15 + Math.random() * 0.25
+             : layer === 1 ? 0.4 + Math.random() * 0.5
+             : 0.6 + Math.random() * 0.4,
+        layer,
+        pulsePhase: Math.random() * Math.PI * 2,
       });
     }
 
@@ -86,98 +138,181 @@ function InteractiveBackground() {
     const handleResize = () => {
       width = window.innerWidth;
       height = window.innerHeight;
-      canvas.width = width;
-      canvas.height = height;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = width + "px";
+      canvas.style.height = height + "px";
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
     };
 
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("resize", handleResize);
 
     function animate() {
-      ctx!.clearRect(0, 0, width, height);
+      timeRef.current += 1;
+      const time = timeRef.current;
 
-      // Smooth mouse interpolation
-      mouseRef.current.x += (mouseRef.current.targetX - mouseRef.current.x) * 0.08;
-      mouseRef.current.y += (mouseRef.current.targetY - mouseRef.current.y) * 0.08;
+      // Semi-transparent clear for motion trail effect
+      ctx!.fillStyle = "rgba(10, 10, 15, 0.12)";
+      ctx!.fillRect(0, 0, width, height);
+      // Full clear every 120 frames to prevent ghosting buildup
+      if (time % 120 === 0) {
+        ctx!.fillStyle = B.black;
+        ctx!.fillRect(0, 0, width, height);
+      }
+
+      // Smooth mouse
+      mouseRef.current.x += (mouseRef.current.targetX - mouseRef.current.x) * 0.06;
+      mouseRef.current.y += (mouseRef.current.targetY - mouseRef.current.y) * 0.06;
       const mx = mouseRef.current.x;
       const my = mouseRef.current.y;
 
-      // Update and draw particles
+      // Update mouse trail
+      if (mx > 0 && my > 0) {
+        mouseTrailRef.current.unshift({ x: mx, y: my });
+        if (mouseTrailRef.current.length > MOUSE_TRAIL_LENGTH) mouseTrailRef.current.pop();
+      }
+
+      // ─── Draw mouse trail glow (comet effect) ───
+      const trail = mouseTrailRef.current;
+      if (trail.length > 2) {
+        for (let t = trail.length - 1; t >= 0; t--) {
+          const trailAlpha = (1 - t / trail.length) * 0.15;
+          const trailRadius = MOUSE_RADIUS * (1 - t / trail.length * 0.6);
+          const grad = ctx!.createRadialGradient(trail[t].x, trail[t].y, 0, trail[t].x, trail[t].y, trailRadius);
+          grad.addColorStop(0, `rgba(239,131,22,${trailAlpha})`);
+          grad.addColorStop(0.4, `rgba(40,65,209,${trailAlpha * 0.4})`);
+          grad.addColorStop(1, "transparent");
+          ctx!.fillStyle = grad;
+          ctx!.fillRect(0, 0, width, height);
+        }
+      }
+
+      // ─── Update and draw particles ───
+      const noiseTime = time * FLOW_SPEED;
+
       particles.forEach((p) => {
-        // Drift movement
+        // Flow field: use simplex noise to get an angle
+        const noiseVal = simplex2D(p.x * FLOW_SCALE, p.y * FLOW_SCALE + noiseTime);
+        const angle = noiseVal * Math.PI * 2;
+        p.vx += Math.cos(angle) * FLOW_FORCE * (p.layer === 0 ? 0.5 : 1);
+        p.vy += Math.sin(angle) * FLOW_FORCE * (p.layer === 0 ? 0.5 : 1);
+
+        // Friction / damping
+        p.vx *= 0.96;
+        p.vy *= 0.96;
+
+        // Apply velocity
         p.x += p.vx;
         p.y += p.vy;
 
-        // Wrap around edges
-        if (p.x < -10) p.x = width + 10;
-        if (p.x > width + 10) p.x = -10;
-        if (p.y < -10) p.y = height + 10;
-        if (p.y > height + 10) p.y = -10;
+        // Wrap edges
+        if (p.x < -20) p.x = width + 20;
+        if (p.x > width + 20) p.x = -20;
+        if (p.y < -20) p.y = height + 20;
+        if (p.y > height + 20) p.y = -20;
 
-        // Mouse attraction/repulsion
+        // Mouse interaction: attraction for layer 1, repulsion for layer 2
         const dx = mx - p.x;
         const dy = my - p.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < MOUSE_RADIUS) {
+        if (dist < MOUSE_RADIUS && dist > 0) {
           const force = (MOUSE_RADIUS - dist) / MOUSE_RADIUS;
-          p.x -= dx * force * 0.02;
-          p.y -= dy * force * 0.02;
+          if (p.layer === 2) {
+            // Sparkles repel away from cursor
+            p.vx -= (dx / dist) * force * 1.2;
+            p.vy -= (dy / dist) * force * 1.2;
+          } else {
+            // Others gently attract then orbit
+            const orbAngle = Math.atan2(dy, dx) + Math.PI / 2;
+            p.vx += Math.cos(orbAngle) * force * 0.3 + (dx / dist) * force * 0.05;
+            p.vy += Math.sin(orbAngle) * force * 0.3 + (dy / dist) * force * 0.05;
+          }
         }
 
-        // Draw particle with glow
+        // Pulsing alpha for sparkle layer
+        const pulse = p.layer === 2
+          ? 0.5 + 0.5 * Math.sin(time * 0.05 + p.pulsePhase)
+          : 1;
+
+        // Draw particle
+        const drawAlpha = p.alpha * pulse;
+        const glowSize = p.layer === 2 ? 25 : p.layer === 1 ? 18 : 8;
+
         ctx!.save();
-        ctx!.globalAlpha = p.alpha;
-        ctx!.shadowBlur = 15;
-        ctx!.shadowColor = p.color;
+        ctx!.globalAlpha = drawAlpha;
+        ctx!.shadowBlur = glowSize;
+        ctx!.shadowColor = p.glowColor;
         ctx!.fillStyle = p.color;
         ctx!.beginPath();
         ctx!.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx!.fill();
+        // Double-draw for extra glow on brand-colored particles
+        if (p.layer >= 1) {
+          ctx!.globalAlpha = drawAlpha * 0.4;
+          ctx!.shadowBlur = glowSize * 2;
+          ctx!.beginPath();
+          ctx!.arc(p.x, p.y, p.size * 0.6, 0, Math.PI * 2);
+          ctx!.fill();
+        }
         ctx!.restore();
       });
 
-      // Draw connections
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x;
-          const dy = particles[i].y - particles[j].y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
+      // ─── Draw connections (only mid-layer for performance) ───
+      const midParticles = particles.filter(p => p.layer === 1);
+      for (let i = 0; i < midParticles.length; i++) {
+        for (let j = i + 1; j < midParticles.length; j++) {
+          const dx = midParticles[i].x - midParticles[j].x;
+          const dy = midParticles[i].y - midParticles[j].y;
+          const distSq = dx * dx + dy * dy;
 
-          if (dist < CONNECTION_DISTANCE) {
-            const alpha = (1 - dist / CONNECTION_DISTANCE) * 0.15;
+          if (distSq < CONNECTION_DISTANCE * CONNECTION_DISTANCE) {
+            const dist = Math.sqrt(distSq);
+            const alpha = (1 - dist / CONNECTION_DISTANCE) * 0.25;
 
-            // Connections near mouse are brighter and orange
-            const midX = (particles[i].x + particles[j].x) / 2;
-            const midY = (particles[i].y + particles[j].y) / 2;
-            const mouseDist = Math.sqrt((mx - midX) ** 2 + (my - midY) ** 2);
-            const mouseInfluence = Math.max(0, 1 - mouseDist / (MOUSE_RADIUS * 1.5));
+            // Connections near mouse glow orange and bright
+            const midX = (midParticles[i].x + midParticles[j].x) / 2;
+            const midY = (midParticles[i].y + midParticles[j].y) / 2;
+            const mDist = Math.sqrt((mx - midX) ** 2 + (my - midY) ** 2);
+            const mInfluence = Math.max(0, 1 - mDist / (MOUSE_RADIUS * 1.5));
 
             ctx!.save();
-            ctx!.globalAlpha = alpha + mouseInfluence * 0.2;
-            ctx!.strokeStyle = mouseInfluence > 0.3 ? B.orange : "rgba(255,255,255,0.5)";
-            ctx!.lineWidth = 0.5 + mouseInfluence;
+            ctx!.globalAlpha = alpha + mInfluence * 0.35;
+            if (mInfluence > 0.2) {
+              ctx!.strokeStyle = B.orange;
+              ctx!.shadowBlur = 6;
+              ctx!.shadowColor = B.orange;
+            } else {
+              ctx!.strokeStyle = `rgba(255,255,255,0.4)`;
+            }
+            ctx!.lineWidth = 0.5 + mInfluence * 1.5;
             ctx!.beginPath();
-            ctx!.moveTo(particles[i].x, particles[i].y);
-            ctx!.lineTo(particles[j].x, particles[j].y);
+            ctx!.moveTo(midParticles[i].x, midParticles[i].y);
+            ctx!.lineTo(midParticles[j].x, midParticles[j].y);
             ctx!.stroke();
             ctx!.restore();
           }
         }
       }
 
-      // Draw mouse glow
+      // ─── Central mouse glow (large, vivid) ───
       if (mx > 0 && my > 0) {
-        const gradient = ctx!.createRadialGradient(mx, my, 0, mx, my, MOUSE_RADIUS);
-        gradient.addColorStop(0, `${B.orange}15`);
-        gradient.addColorStop(0.5, `${B.blue}08`);
-        gradient.addColorStop(1, "transparent");
-        ctx!.fillStyle = gradient;
+        const g = ctx!.createRadialGradient(mx, my, 0, mx, my, MOUSE_RADIUS * 0.8);
+        g.addColorStop(0, `rgba(239,131,22,0.12)`);
+        g.addColorStop(0.3, `rgba(40,65,209,0.06)`);
+        g.addColorStop(0.6, `rgba(239,131,22,0.02)`);
+        g.addColorStop(1, "transparent");
+        ctx!.fillStyle = g;
         ctx!.fillRect(0, 0, width, height);
       }
 
       animFrameRef.current = requestAnimationFrame(animate);
     }
 
+    // Initial fill to prevent flash
+    ctx.fillStyle = B.black;
+    ctx.fillRect(0, 0, width, height);
     animate();
 
     return () => {
@@ -307,39 +442,69 @@ function LoginScreen({ onAuthenticated }: { onAuthenticated: () => void }) {
       {/* Interactive canvas background */}
       <InteractiveBackground />
 
-      {/* Aurora gradient blobs */}
+      {/* Aurora gradient blobs — vivid, layered */}
       <div style={{ position: "absolute", inset: 0, zIndex: 2, pointerEvents: "none", overflow: "hidden" }}>
+        {/* Primary orange aurora — top-left */}
         <div style={{
-          position: "absolute", top: "-20%", left: "-10%",
-          width: "60vw", height: "60vw", maxWidth: "600px", maxHeight: "600px",
+          position: "absolute", top: "-25%", left: "-15%",
+          width: "70vw", height: "70vw", maxWidth: "800px", maxHeight: "800px",
           borderRadius: "50%",
-          background: `radial-gradient(ellipse, ${B.orange}20, transparent 70%)`,
-          filter: "blur(60px)",
+          background: `radial-gradient(ellipse, ${B.orange}35, ${B.orange}15 40%, transparent 70%)`,
+          filter: "blur(80px)",
           animation: "auroraFloat1 8s ease-in-out infinite",
         }} />
+        {/* Deep blue aurora — bottom-right */}
         <div style={{
-          position: "absolute", bottom: "-20%", right: "-10%",
-          width: "50vw", height: "50vw", maxWidth: "500px", maxHeight: "500px",
+          position: "absolute", bottom: "-25%", right: "-15%",
+          width: "65vw", height: "65vw", maxWidth: "700px", maxHeight: "700px",
           borderRadius: "50%",
-          background: `radial-gradient(ellipse, ${B.blue}18, transparent 70%)`,
-          filter: "blur(60px)",
+          background: `radial-gradient(ellipse, ${B.blue}30, ${B.blue}12 40%, transparent 70%)`,
+          filter: "blur(80px)",
           animation: "auroraFloat2 10s ease-in-out infinite",
         }} />
+        {/* Secondary orange — mid-right */}
         <div style={{
-          position: "absolute", top: "30%", right: "20%",
-          width: "30vw", height: "30vw", maxWidth: "300px", maxHeight: "300px",
+          position: "absolute", top: "25%", right: "10%",
+          width: "40vw", height: "40vw", maxWidth: "450px", maxHeight: "450px",
           borderRadius: "50%",
-          background: `radial-gradient(ellipse, ${B.orangeLight}12, transparent 70%)`,
-          filter: "blur(40px)",
+          background: `radial-gradient(ellipse, ${B.orangeLight}25, transparent 70%)`,
+          filter: "blur(50px)",
           animation: "auroraFloat3 6s ease-in-out infinite",
+        }} />
+        {/* Blue accent — mid-left */}
+        <div style={{
+          position: "absolute", top: "55%", left: "5%",
+          width: "35vw", height: "35vw", maxWidth: "400px", maxHeight: "400px",
+          borderRadius: "50%",
+          background: `radial-gradient(ellipse, ${B.blueLight}20, transparent 70%)`,
+          filter: "blur(60px)",
+          animation: "auroraFloat4 12s ease-in-out infinite",
+        }} />
+        {/* Warm center glow — behind form */}
+        <div style={{
+          position: "absolute", top: "40%", left: "50%", transform: "translate(-50%, -50%)",
+          width: "50vw", height: "50vw", maxWidth: "500px", maxHeight: "500px",
+          borderRadius: "50%",
+          background: `radial-gradient(ellipse, ${B.orange}12, ${B.blue}06 50%, transparent 70%)`,
+          filter: "blur(100px)",
+          animation: "auroraFloat5 15s ease-in-out infinite",
         }} />
       </div>
 
-      {/* Noise texture overlay */}
+      {/* Animated grain texture overlay */}
+      <div className="login-grain" style={{
+        position: "absolute", inset: "-100%", zIndex: 3, pointerEvents: "none",
+        opacity: 0.06,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+        backgroundSize: "256px 256px",
+      }} />
+
+      {/* Scan line effect */}
       <div style={{
-        position: "absolute", inset: 0, zIndex: 3, pointerEvents: "none",
-        opacity: 0.03,
-        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+        position: "absolute", inset: 0, zIndex: 4, pointerEvents: "none",
+        opacity: 0.015,
+        backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.1) 2px, rgba(255,255,255,0.1) 4px)",
+        backgroundSize: "100% 4px",
       }} />
 
       {/* Content */}
@@ -383,14 +548,19 @@ function LoginScreen({ onAuthenticated }: { onAuthenticated: () => void }) {
           <form
             ref={formRef}
             onSubmit={handleSubmit}
+            className="login-form"
             style={{
-              background: "rgba(255,255,255,0.04)",
-              border: `1px solid ${error ? "#ef4444" : isExiting ? "#22c55e" : focusedField ? `${B.orange}40` : "rgba(255,255,255,0.08)"}`,
-              borderRadius: "24px",
-              padding: "40px 36px",
-              backdropFilter: "blur(24px)",
-              boxShadow: `0 20px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)`,
-              transition: "border-color 0.4s, box-shadow 0.4s",
+              background: "rgba(255,255,255,0.05)",
+              border: `1px solid ${error ? "#ef4444" : isExiting ? "#22c55e" : focusedField ? `${B.orange}50` : "rgba(255,255,255,0.1)"}`,
+              borderRadius: "28px",
+              padding: "44px 40px",
+              backdropFilter: "blur(30px) saturate(150%)",
+              WebkitBackdropFilter: "blur(30px) saturate(150%)",
+              boxShadow: focusedField
+                ? `0 24px 80px rgba(0,0,0,0.6), 0 0 80px ${B.orange}12, inset 0 1px 0 rgba(255,255,255,0.08)`
+                : `0 24px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06)`,
+              transition: "border-color 0.4s, box-shadow 0.6s cubic-bezier(0.22,1,0.36,1)",
+              position: "relative",
             }}
           >
             {/* Username */}
@@ -466,33 +636,53 @@ function LoginScreen({ onAuthenticated }: { onAuthenticated: () => void }) {
               }}>{error}</div>
             )}
 
-            {/* Submit button with gradient border */}
+            {/* Magnetic submit button */}
             <button
               type="submit" disabled={isExiting}
+              className="magnetic-btn"
               style={{
-                width: "100%", padding: "18px",
-                background: `linear-gradient(135deg, ${B.orange}, ${B.orangeLight})`,
-                border: "none", borderRadius: "14px",
-                color: B.black, fontSize: "15px", fontWeight: 700,
-                fontFamily: "inherit",
+                width: "100%", padding: "20px",
+                background: `linear-gradient(135deg, ${B.orange}, ${B.orangeLight}, ${B.orange})`,
+                backgroundSize: "200% 200%",
+                border: "none", borderRadius: "16px",
+                color: B.black, fontSize: "15px", fontWeight: 800,
+                fontFamily: "inherit", letterSpacing: "0.05em",
                 cursor: isExiting ? "wait" : "pointer",
-                boxShadow: `0 8px 32px ${B.orange}40`,
-                transition: "transform 0.3s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s",
+                boxShadow: `0 8px 40px ${B.orange}50, 0 0 60px ${B.orange}15`,
+                transition: "box-shadow 0.4s cubic-bezier(0.22,1,0.36,1), background-position 0.3s",
                 position: "relative", overflow: "hidden",
               }}
-              onMouseEnter={(e) => {
-                if (!isExiting) {
-                  e.currentTarget.style.transform = "translateY(-2px) scale(1.01)";
-                  e.currentTarget.style.boxShadow = `0 12px 40px ${B.orange}50`;
-                }
+              onMouseMove={(e) => {
+                if (isExiting) return;
+                const rect = e.currentTarget.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+                // Magnetic pull: button moves toward cursor
+                e.currentTarget.style.transform = `translate(${x * 0.15}px, ${y * 0.3}px) scale(1.02)`;
+                // Gradient follows mouse
+                const px = ((e.clientX - rect.left) / rect.width) * 100;
+                e.currentTarget.style.backgroundPosition = `${px}% 50%`;
+                e.currentTarget.style.boxShadow = `0 12px 50px ${B.orange}60, 0 0 80px ${B.orange}20`;
+                // Shine spotlight
+                const shine = e.currentTarget.querySelector(".btn-shine") as HTMLElement;
+                if (shine) { shine.style.left = `${e.clientX - rect.left}px`; shine.style.top = `${e.clientY - rect.top}px`; }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0) scale(1)";
-                e.currentTarget.style.boxShadow = `0 8px 32px ${B.orange}40`;
+                e.currentTarget.style.transform = "translate(0, 0) scale(1)";
+                e.currentTarget.style.backgroundPosition = "0% 50%";
+                e.currentTarget.style.boxShadow = `0 8px 40px ${B.orange}50, 0 0 60px ${B.orange}15`;
               }}
             >
+              {/* Shine spotlight overlay */}
+              <div className="btn-shine" style={{
+                position: "absolute", width: "120px", height: "120px",
+                borderRadius: "50%", background: "rgba(255,255,255,0.25)",
+                filter: "blur(30px)", transform: "translate(-50%, -50%)",
+                pointerEvents: "none", transition: "left 0.1s, top 0.1s",
+                left: "50%", top: "50%",
+              }} />
               <span style={{ position: "relative", zIndex: 2 }}>
-                {isExiting ? "Entering..." : "Enter Presentation →"}
+                {isExiting ? "✦ Entering..." : "Enter Presentation →"}
               </span>
             </button>
           </form>
@@ -512,23 +702,62 @@ function LoginScreen({ onAuthenticated }: { onAuthenticated: () => void }) {
       <style>{`
         @keyframes auroraFloat1 {
           0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(5vw, 3vh) scale(1.1); }
-          66% { transform: translate(-3vw, -2vh) scale(0.95); }
+          25% { transform: translate(8vw, 5vh) scale(1.15); }
+          50% { transform: translate(3vw, -3vh) scale(1.05); }
+          75% { transform: translate(-5vw, 2vh) scale(1.1); }
         }
         @keyframes auroraFloat2 {
           0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(-4vw, -3vh) scale(1.05); }
-          66% { transform: translate(3vw, 4vh) scale(1.1); }
+          25% { transform: translate(-6vw, -4vh) scale(1.1); }
+          50% { transform: translate(4vw, 6vh) scale(1.15); }
+          75% { transform: translate(-2vw, 3vh) scale(0.95); }
         }
         @keyframes auroraFloat3 {
           0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
-          50% { transform: translate(2vw, -2vh) scale(1.15) rotate(10deg); }
+          33% { transform: translate(4vw, -3vh) scale(1.2) rotate(8deg); }
+          66% { transform: translate(-3vw, 2vh) scale(0.95) rotate(-5deg); }
+        }
+        @keyframes auroraFloat4 {
+          0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+          50% { transform: translate(6vw, 4vh) scale(1.1) rotate(15deg); }
+        }
+        @keyframes auroraFloat5 {
+          0%, 100% { transform: translate(-50%, -50%) scale(1); }
+          33% { transform: translate(-48%, -52%) scale(1.1); }
+          66% { transform: translate(-52%, -48%) scale(0.9); }
         }
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(8px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        input::placeholder { color: rgba(255,255,255,0.2); }
+        @keyframes grainShift {
+          0% { transform: translate(0, 0); }
+          10% { transform: translate(-5%, -10%); }
+          20% { transform: translate(-15%, 5%); }
+          30% { transform: translate(7%, -25%); }
+          40% { transform: translate(-5%, 25%); }
+          50% { transform: translate(-15%, 10%); }
+          60% { transform: translate(15%, 0%); }
+          70% { transform: translate(0%, 15%); }
+          80% { transform: translate(3%, 35%); }
+          90% { transform: translate(-10%, 10%); }
+          100% { transform: translate(0, 0); }
+        }
+        @keyframes formGlow {
+          0%, 100% { box-shadow: 0 24px 80px rgba(0,0,0,0.6), 0 0 0px transparent, inset 0 1px 0 rgba(255,255,255,0.06); }
+          50% { box-shadow: 0 24px 80px rgba(0,0,0,0.6), 0 0 40px rgba(239,131,22,0.06), inset 0 1px 0 rgba(255,255,255,0.08); }
+        }
+        .login-grain {
+          animation: grainShift 4s steps(10) infinite;
+        }
+        .login-form {
+          animation: formGlow 4s ease-in-out infinite;
+        }
+        .magnetic-btn {
+          transition: transform 0.2s cubic-bezier(0.22,1,0.36,1), box-shadow 0.4s, background-position 0.3s !important;
+        }
+        input::placeholder { color: rgba(255,255,255,0.25); }
+        input:focus::placeholder { color: rgba(239,131,22,0.3); }
       `}</style>
     </div>
   );
