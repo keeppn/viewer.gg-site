@@ -29,37 +29,12 @@ const VALID_CREDENTIALS = [
 ];
 
 // ═══════════════════════════════════════════
-// ─── SIMPLEX NOISE (compact implementation) ───
-// Used for flow field organic particle movement
-// ═══════════════════════════════════════════
-const _grad3 = [[1,1,0],[-1,1,0],[1,-1,0],[-1,-1,0],[1,0,1],[-1,0,1],[1,0,-1],[-1,0,-1],[0,1,1],[0,-1,1],[0,1,-1],[0,-1,-1]];
-const _p = [151,160,137,91,90,15,131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,37,240,21,10,23,190,6,148,247,120,234,75,0,26,197,62,94,252,219,203,117,35,11,32,57,177,33,88,237,149,56,87,174,20,125,136,171,168,68,175,74,165,71,134,139,48,27,166,77,146,158,231,83,111,229,122,60,211,133,230,220,105,92,41,55,46,245,40,244,102,143,54,65,25,63,161,1,216,80,73,209,76,132,187,208,89,18,169,200,196,135,130,116,188,159,86,164,100,109,198,173,186,3,64,52,217,226,250,124,123,5,202,38,147,118,126,255,82,85,212,207,206,59,227,47,16,58,17,182,189,28,42,223,183,170,213,119,248,152,2,44,154,163,70,221,153,101,155,167,43,172,9,129,22,39,253,19,98,108,110,79,113,224,232,178,185,112,104,218,246,97,228,251,34,242,193,238,210,144,12,191,179,162,241,81,51,145,235,249,14,239,107,49,192,214,31,181,199,106,157,184,84,204,176,115,121,50,45,127,4,150,254,138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180];
-const _perm = new Array(512);
-const _gi = new Array(512);
-for (let i = 0; i < 512; i++) { _perm[i] = _p[i & 255]; _gi[i] = _perm[i] % 12; }
-function _dot(g: number[], x: number, y: number) { return g[0]*x + g[1]*y; }
-function simplex2D(xin: number, yin: number): number {
-  const F2 = 0.5*(Math.sqrt(3)-1), G2 = (3-Math.sqrt(3))/6;
-  const s = (xin+yin)*F2; const i = Math.floor(xin+s); const j = Math.floor(yin+s);
-  const t = (i+j)*G2; const x0 = xin-(i-t); const y0 = yin-(j-t);
-  const i1 = x0>y0?1:0, j1 = x0>y0?0:1;
-  const x1 = x0-i1+G2, y1 = y0-j1+G2, x2 = x0-1+2*G2, y2 = y0-1+2*G2;
-  const ii = i&255, jj = j&255;
-  let n0=0, n1=0, n2=0;
-  let t0 = 0.5-x0*x0-y0*y0; if(t0>=0){t0*=t0; n0=t0*t0*_dot(_grad3[_gi[ii+_perm[jj]]],x0,y0);}
-  let t1 = 0.5-x1*x1-y1*y1; if(t1>=0){t1*=t1; n1=t1*t1*_dot(_grad3[_gi[ii+i1+_perm[jj+j1]]],x1,y1);}
-  let t2 = 0.5-x2*x2-y2*y2; if(t2>=0){t2*=t2; n2=t2*t2*_dot(_grad3[_gi[ii+1+_perm[jj+1]]],x2,y2);}
-  return 70*(n0+n1+n2);
-}
-
-// ═══════════════════════════════════════════
 // ─── INTERACTIVE CANVAS BACKGROUND ───
-// Flow-field particle system with mouse trail, high density
+// Clean web/network with evenly-spaced nodes and elegant connections
 // ═══════════════════════════════════════════
 function InteractiveBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mouseRef = useRef({ x: -999, y: -999, targetX: -999, targetY: -999 });
-  const mouseTrailRef = useRef<{x: number; y: number}[]>([]);
   const animFrameRef = useRef<number>(0);
   const timeRef = useRef(0);
 
@@ -79,68 +54,76 @@ function InteractiveBackground() {
     ctx.scale(dpr, dpr);
 
     // ─── SETTINGS ───
-    const PARTICLE_COUNT = 160;
-    const CONNECTION_DISTANCE = 200;  // wider reach = more mesh connections
-    const MOUSE_RADIUS = 280;
-    const FLOW_SCALE = 0.0015;    // larger features = smoother, more cohesive flow
-    const FLOW_SPEED = 0.00025;   // slower evolution = less chaotic
-    const FLOW_FORCE = 0.06;      // gentler push = particles drift together, not scatter
-    const MOUSE_TRAIL_LENGTH = 10;
+    const NODE_COUNT = 60;               // fewer = cleaner, more spread out
+    const CONNECTION_DISTANCE = 320;      // very wide reach = web-like mesh
+    const MOUSE_RADIUS = 300;
+    const MIN_NODE_SPACING = 100;         // minimum distance between nodes
 
-    // Center dead zone — particles avoid the form area
-    const CENTER_X = width / 2;
-    const CENTER_Y = height / 2;
-    const DEAD_ZONE_W = 280;  // half-width of exclusion rectangle
-    const DEAD_ZONE_H = 240;  // half-height of exclusion rectangle
-    const DEAD_ZONE_PUSH = 0.4; // how hard particles get pushed out
+    // Center dead zone — nodes stay behind the form
+    const DEAD_ZONE_W = 270;
+    const DEAD_ZONE_H = 230;
+    const DEAD_ZONE_PUSH = 0.3;
 
-    interface Particle {
+    interface Node {
       x: number; y: number;
+      homeX: number; homeY: number;     // anchor position for gentle oscillation
       vx: number; vy: number;
       size: number;
       color: string;
       glowColor: string;
       alpha: number;
-      layer: number; // 0=back, 1=mid, 2=front (sparkle)
-      pulsePhase: number;
+      phase: number;                    // for oscillation
+      speed: number;                    // oscillation speed
+      amplitude: number;               // oscillation range
     }
 
-    const particles: Particle[] = [];
-    const layerColors = [
-      // Back layer: subtle white/blue
-      ["rgba(255,255,255,0.4)", "rgba(100,130,255,0.3)", "rgba(180,180,220,0.25)"],
-      // Mid layer: brand colors
-      [B.orange, B.blue, B.orangeLight, B.blueLight],
-      // Front layer: bright sparkles
-      [B.orange, "#FFFFFF", B.orangeLight],
-    ];
+    const nodes: Node[] = [];
+    const nodeColors = [B.orange, B.blue, B.orangeLight, B.blueLight, "rgba(255,255,255,0.6)"];
 
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      const layer = i < 50 ? 0 : i < 130 ? 1 : 2;
-      const colors = layerColors[layer];
-      const color = colors[Math.floor(Math.random() * colors.length)];
-      // Spawn particles away from center to avoid initial overlap with form
-      let px, py;
-      do {
-        px = Math.random() * width;
-        py = Math.random() * height;
-      } while (Math.abs(px - CENTER_X) < DEAD_ZONE_W * 0.7 && Math.abs(py - CENTER_Y) < DEAD_ZONE_H * 0.7);
-      particles.push({
-        x: px,
-        y: py,
-        vx: (Math.random() - 0.5) * 0.2,
-        vy: (Math.random() - 0.5) * 0.2,
-        size: layer === 0 ? 1 + Math.random() * 1.2
-            : layer === 1 ? 1.2 + Math.random() * 2.5
-            : 0.6 + Math.random() * 1,
-        color,
-        glowColor: layer === 2 ? B.orange : color,
-        alpha: layer === 0 ? 0.1 + Math.random() * 0.2
-             : layer === 1 ? 0.3 + Math.random() * 0.4
-             : 0.5 + Math.random() * 0.35,
-        layer,
-        pulsePhase: Math.random() * Math.PI * 2,
-      });
+    // Grid-based placement with jitter for even spread
+    const cols = Math.ceil(Math.sqrt(NODE_COUNT * (width / height)));
+    const rows = Math.ceil(NODE_COUNT / cols);
+    const cellW = width / cols;
+    const cellH = height / rows;
+    let placed = 0;
+
+    for (let row = 0; row < rows && placed < NODE_COUNT; row++) {
+      for (let col = 0; col < cols && placed < NODE_COUNT; col++) {
+        const cx = width / 2;
+        const cy = height / 2;
+        // Grid position + random jitter (40% of cell size)
+        let px = (col + 0.5) * cellW + (Math.random() - 0.5) * cellW * 0.8;
+        let py = (row + 0.5) * cellH + (Math.random() - 0.5) * cellH * 0.8;
+        // Skip if inside dead zone
+        if (Math.abs(px - cx) < DEAD_ZONE_W * 0.6 && Math.abs(py - cy) < DEAD_ZONE_H * 0.6) {
+          // Push to nearest edge of dead zone
+          const pushX = px < cx ? cx - DEAD_ZONE_W * 0.7 : cx + DEAD_ZONE_W * 0.7;
+          const pushY = py < cy ? cy - DEAD_ZONE_H * 0.7 : cy + DEAD_ZONE_H * 0.7;
+          if (Math.abs(px - cx) / DEAD_ZONE_W > Math.abs(py - cy) / DEAD_ZONE_H) {
+            px = pushX;
+          } else {
+            py = pushY;
+          }
+        }
+        // Clamp to viewport
+        px = Math.max(20, Math.min(width - 20, px));
+        py = Math.max(20, Math.min(height - 20, py));
+
+        const isBrand = Math.random() > 0.4;
+        const color = nodeColors[Math.floor(Math.random() * nodeColors.length)];
+        nodes.push({
+          x: px, y: py, homeX: px, homeY: py,
+          vx: 0, vy: 0,
+          size: isBrand ? 2.5 + Math.random() * 2 : 1.5 + Math.random() * 1.5,
+          color,
+          glowColor: color === B.orange || color === B.orangeLight ? B.orange : color === B.blue || color === B.blueLight ? B.blue : "rgba(255,255,255,0.4)",
+          alpha: isBrand ? 0.5 + Math.random() * 0.4 : 0.2 + Math.random() * 0.25,
+          phase: Math.random() * Math.PI * 2,
+          speed: 0.003 + Math.random() * 0.005,
+          amplitude: 15 + Math.random() * 25,
+        });
+        placed++;
+      }
     }
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -166,172 +149,136 @@ function InteractiveBackground() {
       timeRef.current += 1;
       const time = timeRef.current;
 
-      // Semi-transparent clear for motion trail effect
-      ctx!.fillStyle = "rgba(10, 10, 15, 0.12)";
+      // Full clear each frame (no motion trails — clean network look)
+      ctx!.fillStyle = B.black;
       ctx!.fillRect(0, 0, width, height);
-      // Full clear every 120 frames to prevent ghosting buildup
-      if (time % 120 === 0) {
-        ctx!.fillStyle = B.black;
-        ctx!.fillRect(0, 0, width, height);
-      }
 
-      // Smooth mouse
-      mouseRef.current.x += (mouseRef.current.targetX - mouseRef.current.x) * 0.06;
-      mouseRef.current.y += (mouseRef.current.targetY - mouseRef.current.y) * 0.06;
+      // Smooth mouse interpolation
+      mouseRef.current.x += (mouseRef.current.targetX - mouseRef.current.x) * 0.08;
+      mouseRef.current.y += (mouseRef.current.targetY - mouseRef.current.y) * 0.08;
       const mx = mouseRef.current.x;
       const my = mouseRef.current.y;
-
-      // Update mouse trail
-      if (mx > 0 && my > 0) {
-        mouseTrailRef.current.unshift({ x: mx, y: my });
-        if (mouseTrailRef.current.length > MOUSE_TRAIL_LENGTH) mouseTrailRef.current.pop();
-      }
-
-      // ─── Draw mouse trail glow (subtle comet) ───
-      const trail = mouseTrailRef.current;
-      if (trail.length > 2) {
-        for (let t = trail.length - 1; t >= 0; t--) {
-          const trailAlpha = (1 - t / trail.length) * 0.08;
-          const trailRadius = MOUSE_RADIUS * (1 - t / trail.length * 0.6);
-          const grad = ctx!.createRadialGradient(trail[t].x, trail[t].y, 0, trail[t].x, trail[t].y, trailRadius);
-          grad.addColorStop(0, `rgba(239,131,22,${trailAlpha})`);
-          grad.addColorStop(0.5, `rgba(40,65,209,${trailAlpha * 0.3})`);
-          grad.addColorStop(1, "transparent");
-          ctx!.fillStyle = grad;
-          ctx!.fillRect(0, 0, width, height);
-        }
-      }
-
-      // Recalculate center (in case of resize)
       const cx = width / 2;
       const cy = height / 2;
 
-      // ─── Update and draw particles ───
-      const noiseTime = time * FLOW_SPEED;
+      // ─── Update node positions (gentle oscillation around home) ───
+      nodes.forEach((n) => {
+        // Smooth oscillation around anchor point
+        const t = time * n.speed;
+        n.x = n.homeX + Math.sin(t + n.phase) * n.amplitude;
+        n.y = n.homeY + Math.cos(t * 0.7 + n.phase * 1.3) * n.amplitude * 0.6;
 
-      particles.forEach((p) => {
-        // Flow field: use simplex noise to get an angle
-        const noiseVal = simplex2D(p.x * FLOW_SCALE, p.y * FLOW_SCALE + noiseTime);
-        const angle = noiseVal * Math.PI * 2;
-        p.vx += Math.cos(angle) * FLOW_FORCE * (p.layer === 0 ? 0.4 : 1);
-        p.vy += Math.sin(angle) * FLOW_FORCE * (p.layer === 0 ? 0.4 : 1);
-
-        // ─── Dead zone: push particles away from center (behind the form) ───
-        const dxC = p.x - cx;
-        const dyC = p.y - cy;
-        const absX = Math.abs(dxC);
-        const absY = Math.abs(dyC);
-        if (absX < DEAD_ZONE_W && absY < DEAD_ZONE_H) {
-          // How deep inside the dead zone (0 = edge, 1 = center)
-          const overlapX = 1 - absX / DEAD_ZONE_W;
-          const overlapY = 1 - absY / DEAD_ZONE_H;
+        // Dead zone push
+        const dxC = n.x - cx;
+        const dyC = n.y - cy;
+        if (Math.abs(dxC) < DEAD_ZONE_W && Math.abs(dyC) < DEAD_ZONE_H) {
+          const overlapX = 1 - Math.abs(dxC) / DEAD_ZONE_W;
+          const overlapY = 1 - Math.abs(dyC) / DEAD_ZONE_H;
           const overlap = overlapX * overlapY;
-          // Push outward from center
           const pushDist = Math.sqrt(dxC * dxC + dyC * dyC) || 1;
-          p.vx += (dxC / pushDist) * overlap * DEAD_ZONE_PUSH;
-          p.vy += (dyC / pushDist) * overlap * DEAD_ZONE_PUSH;
+          n.x += (dxC / pushDist) * overlap * DEAD_ZONE_PUSH * 40;
+          n.y += (dyC / pushDist) * overlap * DEAD_ZONE_PUSH * 40;
         }
 
-        // Friction / damping (higher = smoother, more cohesive drift)
-        p.vx *= 0.94;
-        p.vy *= 0.94;
-
-        // Apply velocity
-        p.x += p.vx;
-        p.y += p.vy;
-
-        // Wrap edges
-        if (p.x < -20) p.x = width + 20;
-        if (p.x > width + 20) p.x = -20;
-        if (p.y < -20) p.y = height + 20;
-        if (p.y > height + 20) p.y = -20;
-
-        // Mouse interaction: gentle orbit for mid, repel for sparkles
-        const dx = mx - p.x;
-        const dy = my - p.y;
+        // Mouse interaction: nodes gently pushed away from cursor
+        const dx = mx - n.x;
+        const dy = my - n.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         if (dist < MOUSE_RADIUS && dist > 0) {
           const force = (MOUSE_RADIUS - dist) / MOUSE_RADIUS;
-          if (p.layer === 2) {
-            p.vx -= (dx / dist) * force * 0.8;
-            p.vy -= (dy / dist) * force * 0.8;
-          } else {
-            const orbAngle = Math.atan2(dy, dx) + Math.PI / 2;
-            p.vx += Math.cos(orbAngle) * force * 0.2 + (dx / dist) * force * 0.03;
-            p.vy += Math.sin(orbAngle) * force * 0.2 + (dy / dist) * force * 0.03;
-          }
+          n.x -= (dx / dist) * force * 25;
+          n.y -= (dy / dist) * force * 25;
         }
-
-        // Pulsing alpha for sparkle layer
-        const pulse = p.layer === 2
-          ? 0.5 + 0.5 * Math.sin(time * 0.04 + p.pulsePhase)
-          : 1;
-
-        // Draw particle
-        const drawAlpha = p.alpha * pulse;
-        const glowSize = p.layer === 2 ? 18 : p.layer === 1 ? 12 : 6;
-
-        ctx!.save();
-        ctx!.globalAlpha = drawAlpha;
-        ctx!.shadowBlur = glowSize;
-        ctx!.shadowColor = p.glowColor;
-        ctx!.fillStyle = p.color;
-        ctx!.beginPath();
-        ctx!.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx!.fill();
-        // Subtle second glow pass on brand-colored particles only
-        if (p.layer === 1) {
-          ctx!.globalAlpha = drawAlpha * 0.25;
-          ctx!.shadowBlur = glowSize * 1.5;
-          ctx!.beginPath();
-          ctx!.arc(p.x, p.y, p.size * 0.5, 0, Math.PI * 2);
-          ctx!.fill();
-        }
-        ctx!.restore();
       });
 
-      // ─── Draw connections (mid-layer — wider reach for cohesive mesh) ───
-      const midParticles = particles.filter(p => p.layer === 1);
-      for (let i = 0; i < midParticles.length; i++) {
-        for (let j = i + 1; j < midParticles.length; j++) {
-          const dx = midParticles[i].x - midParticles[j].x;
-          const dy = midParticles[i].y - midParticles[j].y;
+      // ─── Draw connections FIRST (behind nodes) ───
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const dx = nodes[i].x - nodes[j].x;
+          const dy = nodes[i].y - nodes[j].y;
           const distSq = dx * dx + dy * dy;
+          const connDistSq = CONNECTION_DISTANCE * CONNECTION_DISTANCE;
 
-          if (distSq < CONNECTION_DISTANCE * CONNECTION_DISTANCE) {
+          if (distSq < connDistSq) {
             const dist = Math.sqrt(distSq);
-            const alpha = (1 - dist / CONNECTION_DISTANCE) * 0.18;
+            const alpha = (1 - dist / CONNECTION_DISTANCE) * 0.15;
 
-            // Connections near mouse glow orange
-            const midX = (midParticles[i].x + midParticles[j].x) / 2;
-            const midY = (midParticles[i].y + midParticles[j].y) / 2;
+            // Lines near mouse glow orange
+            const midX = (nodes[i].x + nodes[j].x) / 2;
+            const midY = (nodes[i].y + nodes[j].y) / 2;
             const mDist = Math.sqrt((mx - midX) ** 2 + (my - midY) ** 2);
-            const mInfluence = Math.max(0, 1 - mDist / (MOUSE_RADIUS * 1.5));
+            const mInfluence = Math.max(0, 1 - mDist / (MOUSE_RADIUS * 1.8));
 
             ctx!.save();
-            ctx!.globalAlpha = alpha + mInfluence * 0.2;
-            if (mInfluence > 0.2) {
-              ctx!.strokeStyle = B.orange;
-              ctx!.shadowBlur = 4;
+            ctx!.globalAlpha = alpha + mInfluence * 0.25;
+            if (mInfluence > 0.15) {
+              // Gradient line near mouse: orange glow
+              const grad = ctx!.createLinearGradient(nodes[i].x, nodes[i].y, nodes[j].x, nodes[j].y);
+              grad.addColorStop(0, B.orange);
+              grad.addColorStop(1, B.orangeLight);
+              ctx!.strokeStyle = grad;
+              ctx!.shadowBlur = 6;
               ctx!.shadowColor = B.orange;
             } else {
-              ctx!.strokeStyle = `rgba(255,255,255,0.3)`;
+              ctx!.strokeStyle = "rgba(255,255,255,0.25)";
             }
-            ctx!.lineWidth = 0.4 + mInfluence * 1;
+            ctx!.lineWidth = 0.5 + mInfluence * 1.2;
             ctx!.beginPath();
-            ctx!.moveTo(midParticles[i].x, midParticles[i].y);
-            ctx!.lineTo(midParticles[j].x, midParticles[j].y);
+            ctx!.moveTo(nodes[i].x, nodes[i].y);
+            ctx!.lineTo(nodes[j].x, nodes[j].y);
             ctx!.stroke();
             ctx!.restore();
           }
         }
       }
 
-      // ─── Central mouse glow (subtle) ───
+      // ─── Draw nodes (on top of connections) ───
+      nodes.forEach((n) => {
+        const dx = mx - n.x;
+        const dy = my - n.y;
+        const mouseDist = Math.sqrt(dx * dx + dy * dy);
+        const mouseProximity = Math.max(0, 1 - mouseDist / MOUSE_RADIUS);
+
+        // Node pulse
+        const pulse = 1 + 0.15 * Math.sin(time * 0.03 + n.phase);
+
+        // Draw outer glow ring (subtle)
+        if (n.size > 2.5 || mouseProximity > 0.3) {
+          ctx!.save();
+          ctx!.globalAlpha = (n.alpha * 0.15 + mouseProximity * 0.2) * pulse;
+          ctx!.strokeStyle = n.glowColor;
+          ctx!.lineWidth = 1;
+          ctx!.beginPath();
+          ctx!.arc(n.x, n.y, n.size * 3 + mouseProximity * 8, 0, Math.PI * 2);
+          ctx!.stroke();
+          ctx!.restore();
+        }
+
+        // Draw node core with glow
+        const coreSize = n.size * pulse + mouseProximity * 1.5;
+        ctx!.save();
+        ctx!.globalAlpha = n.alpha + mouseProximity * 0.3;
+        ctx!.shadowBlur = 15 + mouseProximity * 20;
+        ctx!.shadowColor = n.glowColor;
+        ctx!.fillStyle = n.color;
+        ctx!.beginPath();
+        ctx!.arc(n.x, n.y, coreSize, 0, Math.PI * 2);
+        ctx!.fill();
+        // Bright center dot
+        ctx!.globalAlpha = (n.alpha + mouseProximity * 0.4) * 0.8;
+        ctx!.shadowBlur = 0;
+        ctx!.fillStyle = "#FFFFFF";
+        ctx!.beginPath();
+        ctx!.arc(n.x, n.y, coreSize * 0.35, 0, Math.PI * 2);
+        ctx!.fill();
+        ctx!.restore();
+      });
+
+      // ─── Mouse glow ───
       if (mx > 0 && my > 0) {
-        const g = ctx!.createRadialGradient(mx, my, 0, mx, my, MOUSE_RADIUS * 0.7);
-        g.addColorStop(0, `rgba(239,131,22,0.07)`);
-        g.addColorStop(0.35, `rgba(40,65,209,0.03)`);
+        const g = ctx!.createRadialGradient(mx, my, 0, mx, my, MOUSE_RADIUS * 0.6);
+        g.addColorStop(0, "rgba(239,131,22,0.06)");
+        g.addColorStop(0.4, "rgba(40,65,209,0.025)");
         g.addColorStop(1, "transparent");
         ctx!.fillStyle = g;
         ctx!.fillRect(0, 0, width, height);
@@ -340,7 +287,7 @@ function InteractiveBackground() {
       animFrameRef.current = requestAnimationFrame(animate);
     }
 
-    // Initial fill to prevent flash
+    // Initial fill
     ctx.fillStyle = B.black;
     ctx.fillRect(0, 0, width, height);
     animate();
@@ -823,6 +770,8 @@ export default function BroksVisionPage() {
   const ctaRef = useRef<HTMLElement>(null);
   const ctaContentRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLElement>(null);
+  const pacmanRef = useRef<HTMLDivElement>(null);
+  const pacmanPathRef = useRef<SVGPathElement>(null);
 
   const [mounted, setMounted] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
@@ -864,6 +813,31 @@ export default function BroksVisionPage() {
     if (!mounted) return;
     const ctx = gsap.context(() => {
       ScrollTrigger.refresh();
+
+      // ═══ SCROLL PAC-MAN ═══
+      if (pacmanRef.current && pacmanPathRef.current) {
+        const path = pacmanPathRef.current;
+        const pathLength = path.getTotalLength();
+        // Animate pac-man along the S-curve SVG path as user scrolls
+        ScrollTrigger.create({
+          trigger: containerRef.current,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 0.5,
+          onUpdate: (self) => {
+            const progress = self.progress;
+            const point = path.getPointAtLength(progress * pathLength);
+            // Convert SVG coordinates to viewport coordinates
+            const svgRect = path.ownerSVGElement?.getBoundingClientRect();
+            if (svgRect && pacmanRef.current) {
+              const scaleX = svgRect.width / 100;
+              const scaleY = svgRect.height / 100;
+              pacmanRef.current.style.transform = `translate(${svgRect.left + point.x * scaleX}px, ${svgRect.top + point.y * scaleY}px) rotate(${progress * 720}deg)`;
+              pacmanRef.current.style.opacity = progress > 0.02 && progress < 0.98 ? "1" : "0";
+            }
+          },
+        });
+      }
 
       // ═══ HERO ═══
       if (heroRef.current && heroScaleRef.current && heroTopRef.current && heroBgRef.current) {
@@ -992,6 +966,16 @@ export default function BroksVisionPage() {
           { opacity: 1, y: 0, scale: 1, stagger: 0.1, duration: 0.8, ease: "power3.out",
             scrollTrigger: { trigger: footerRef.current, start: "top 80%", toggleActions: "play none none reverse" } });
       }
+      // ═══ ONE-LINER REVEALS ═══
+      document.querySelectorAll(".one-liner-section").forEach((el) => {
+        ScrollTrigger.create({
+          trigger: el,
+          start: "top 70%",
+          onEnter: () => el.classList.add("in-view"),
+          onLeaveBack: () => el.classList.remove("in-view"),
+        });
+      });
+
     }, containerRef);
     return () => ctx.revert();
   }, [mounted]);
@@ -1060,7 +1044,27 @@ export default function BroksVisionPage() {
         @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.2)} }
         @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
         @keyframes scrollPulse { 0%{transform:scaleY(0);transform-origin:top} 50%{transform:scaleY(1);transform-origin:top} 51%{transform:scaleY(1);transform-origin:bottom} 100%{transform:scaleY(0);transform-origin:bottom} }
+        @keyframes pacmanChomp { 0%,100%{clip-path:polygon(100% 50%,50% 0%,0% 0%,0% 100%,50% 100%,100% 50%)} 50%{clip-path:polygon(100% 50%,50% 15%,0% 0%,0% 100%,50% 85%,100% 50%)} }
+        .one-liner-section p { opacity: 0; transform: translateY(40px); }
+        .one-liner-section.in-view p { opacity: 1; transform: translateY(0); transition: opacity 0.8s ease-out, transform 0.8s cubic-bezier(0.22,1,0.36,1); }
       `}</style>
+
+      {/* ═══ SCROLL PAC-MAN — follows S-curve down the page ═══ */}
+      <div ref={pacmanRef} style={{
+        position: "fixed", top: 0, left: 0, zIndex: 50,
+        width: "32px", height: "32px", pointerEvents: "none",
+        opacity: 0, transition: "opacity 0.3s",
+        transform: "translate(-50%, -50%)",
+      }}>
+        <svg viewBox="0 0 100 155" width="32" height="50" style={{ filter: `drop-shadow(0 0 12px ${B.orange}80)` }}>
+          <path d="M 42 45 L 42 75 A 30 30 0 1 1 72 45 Z" fill={B.orange} style={{ animation: "pacmanChomp 0.4s ease-in-out infinite" }} />
+          <path d="M 58 110 L 58 80 A 30 30 0 1 1 28 110 Z" fill={B.orange} style={{ animation: "pacmanChomp 0.4s ease-in-out infinite 0.2s" }} />
+        </svg>
+      </div>
+      {/* Hidden SVG path that defines the S-curve route */}
+      <svg style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none", opacity: 0 }} viewBox="0 0 100 100" preserveAspectRatio="none">
+        <path ref={pacmanPathRef} d="M 85 2 C 85 15, 15 20, 15 35 S 85 45, 85 55 S 15 65, 15 75 S 85 85, 85 98" fill="none" />
+      </svg>
 
       {/* ═══ HERO ═══ */}
       <section ref={heroRef} style={{ height: "300svh", position: "relative", width: "100%" }}>
