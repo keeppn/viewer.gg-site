@@ -79,13 +79,20 @@ function InteractiveBackground() {
     ctx.scale(dpr, dpr);
 
     // ─── SETTINGS ───
-    const PARTICLE_COUNT = 200;
-    const CONNECTION_DISTANCE = 180;
-    const MOUSE_RADIUS = 300;
-    const FLOW_SCALE = 0.003;     // noise zoom
-    const FLOW_SPEED = 0.0004;    // noise time evolution
-    const FLOW_FORCE = 0.15;      // how strongly flow pushes particles
-    const MOUSE_TRAIL_LENGTH = 12;
+    const PARTICLE_COUNT = 160;
+    const CONNECTION_DISTANCE = 200;  // wider reach = more mesh connections
+    const MOUSE_RADIUS = 280;
+    const FLOW_SCALE = 0.0015;    // larger features = smoother, more cohesive flow
+    const FLOW_SPEED = 0.00025;   // slower evolution = less chaotic
+    const FLOW_FORCE = 0.06;      // gentler push = particles drift together, not scatter
+    const MOUSE_TRAIL_LENGTH = 10;
+
+    // Center dead zone — particles avoid the form area
+    const CENTER_X = width / 2;
+    const CENTER_Y = height / 2;
+    const DEAD_ZONE_W = 280;  // half-width of exclusion rectangle
+    const DEAD_ZONE_H = 240;  // half-height of exclusion rectangle
+    const DEAD_ZONE_PUSH = 0.4; // how hard particles get pushed out
 
     interface Particle {
       x: number; y: number;
@@ -101,7 +108,7 @@ function InteractiveBackground() {
     const particles: Particle[] = [];
     const layerColors = [
       // Back layer: subtle white/blue
-      ["rgba(255,255,255,0.5)", "rgba(100,130,255,0.4)", "rgba(180,180,220,0.3)"],
+      ["rgba(255,255,255,0.4)", "rgba(100,130,255,0.3)", "rgba(180,180,220,0.25)"],
       // Mid layer: brand colors
       [B.orange, B.blue, B.orangeLight, B.blueLight],
       // Front layer: bright sparkles
@@ -109,22 +116,28 @@ function InteractiveBackground() {
     ];
 
     for (let i = 0; i < PARTICLE_COUNT; i++) {
-      const layer = i < 60 ? 0 : i < 160 ? 1 : 2;
+      const layer = i < 50 ? 0 : i < 130 ? 1 : 2;
       const colors = layerColors[layer];
       const color = colors[Math.floor(Math.random() * colors.length)];
+      // Spawn particles away from center to avoid initial overlap with form
+      let px, py;
+      do {
+        px = Math.random() * width;
+        py = Math.random() * height;
+      } while (Math.abs(px - CENTER_X) < DEAD_ZONE_W * 0.7 && Math.abs(py - CENTER_Y) < DEAD_ZONE_H * 0.7);
       particles.push({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.3,
-        vy: (Math.random() - 0.5) * 0.3,
-        size: layer === 0 ? 1 + Math.random() * 1.5
-            : layer === 1 ? 1.5 + Math.random() * 3
-            : 0.8 + Math.random() * 1.2,
+        x: px,
+        y: py,
+        vx: (Math.random() - 0.5) * 0.2,
+        vy: (Math.random() - 0.5) * 0.2,
+        size: layer === 0 ? 1 + Math.random() * 1.2
+            : layer === 1 ? 1.2 + Math.random() * 2.5
+            : 0.6 + Math.random() * 1,
         color,
         glowColor: layer === 2 ? B.orange : color,
-        alpha: layer === 0 ? 0.15 + Math.random() * 0.25
-             : layer === 1 ? 0.4 + Math.random() * 0.5
-             : 0.6 + Math.random() * 0.4,
+        alpha: layer === 0 ? 0.1 + Math.random() * 0.2
+             : layer === 1 ? 0.3 + Math.random() * 0.4
+             : 0.5 + Math.random() * 0.35,
         layer,
         pulsePhase: Math.random() * Math.PI * 2,
       });
@@ -174,20 +187,24 @@ function InteractiveBackground() {
         if (mouseTrailRef.current.length > MOUSE_TRAIL_LENGTH) mouseTrailRef.current.pop();
       }
 
-      // ─── Draw mouse trail glow (comet effect) ───
+      // ─── Draw mouse trail glow (subtle comet) ───
       const trail = mouseTrailRef.current;
       if (trail.length > 2) {
         for (let t = trail.length - 1; t >= 0; t--) {
-          const trailAlpha = (1 - t / trail.length) * 0.15;
+          const trailAlpha = (1 - t / trail.length) * 0.08;
           const trailRadius = MOUSE_RADIUS * (1 - t / trail.length * 0.6);
           const grad = ctx!.createRadialGradient(trail[t].x, trail[t].y, 0, trail[t].x, trail[t].y, trailRadius);
           grad.addColorStop(0, `rgba(239,131,22,${trailAlpha})`);
-          grad.addColorStop(0.4, `rgba(40,65,209,${trailAlpha * 0.4})`);
+          grad.addColorStop(0.5, `rgba(40,65,209,${trailAlpha * 0.3})`);
           grad.addColorStop(1, "transparent");
           ctx!.fillStyle = grad;
           ctx!.fillRect(0, 0, width, height);
         }
       }
+
+      // Recalculate center (in case of resize)
+      const cx = width / 2;
+      const cy = height / 2;
 
       // ─── Update and draw particles ───
       const noiseTime = time * FLOW_SPEED;
@@ -196,12 +213,28 @@ function InteractiveBackground() {
         // Flow field: use simplex noise to get an angle
         const noiseVal = simplex2D(p.x * FLOW_SCALE, p.y * FLOW_SCALE + noiseTime);
         const angle = noiseVal * Math.PI * 2;
-        p.vx += Math.cos(angle) * FLOW_FORCE * (p.layer === 0 ? 0.5 : 1);
-        p.vy += Math.sin(angle) * FLOW_FORCE * (p.layer === 0 ? 0.5 : 1);
+        p.vx += Math.cos(angle) * FLOW_FORCE * (p.layer === 0 ? 0.4 : 1);
+        p.vy += Math.sin(angle) * FLOW_FORCE * (p.layer === 0 ? 0.4 : 1);
 
-        // Friction / damping
-        p.vx *= 0.96;
-        p.vy *= 0.96;
+        // ─── Dead zone: push particles away from center (behind the form) ───
+        const dxC = p.x - cx;
+        const dyC = p.y - cy;
+        const absX = Math.abs(dxC);
+        const absY = Math.abs(dyC);
+        if (absX < DEAD_ZONE_W && absY < DEAD_ZONE_H) {
+          // How deep inside the dead zone (0 = edge, 1 = center)
+          const overlapX = 1 - absX / DEAD_ZONE_W;
+          const overlapY = 1 - absY / DEAD_ZONE_H;
+          const overlap = overlapX * overlapY;
+          // Push outward from center
+          const pushDist = Math.sqrt(dxC * dxC + dyC * dyC) || 1;
+          p.vx += (dxC / pushDist) * overlap * DEAD_ZONE_PUSH;
+          p.vy += (dyC / pushDist) * overlap * DEAD_ZONE_PUSH;
+        }
+
+        // Friction / damping (higher = smoother, more cohesive drift)
+        p.vx *= 0.94;
+        p.vy *= 0.94;
 
         // Apply velocity
         p.x += p.vx;
@@ -213,32 +246,30 @@ function InteractiveBackground() {
         if (p.y < -20) p.y = height + 20;
         if (p.y > height + 20) p.y = -20;
 
-        // Mouse interaction: attraction for layer 1, repulsion for layer 2
+        // Mouse interaction: gentle orbit for mid, repel for sparkles
         const dx = mx - p.x;
         const dy = my - p.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         if (dist < MOUSE_RADIUS && dist > 0) {
           const force = (MOUSE_RADIUS - dist) / MOUSE_RADIUS;
           if (p.layer === 2) {
-            // Sparkles repel away from cursor
-            p.vx -= (dx / dist) * force * 1.2;
-            p.vy -= (dy / dist) * force * 1.2;
+            p.vx -= (dx / dist) * force * 0.8;
+            p.vy -= (dy / dist) * force * 0.8;
           } else {
-            // Others gently attract then orbit
             const orbAngle = Math.atan2(dy, dx) + Math.PI / 2;
-            p.vx += Math.cos(orbAngle) * force * 0.3 + (dx / dist) * force * 0.05;
-            p.vy += Math.sin(orbAngle) * force * 0.3 + (dy / dist) * force * 0.05;
+            p.vx += Math.cos(orbAngle) * force * 0.2 + (dx / dist) * force * 0.03;
+            p.vy += Math.sin(orbAngle) * force * 0.2 + (dy / dist) * force * 0.03;
           }
         }
 
         // Pulsing alpha for sparkle layer
         const pulse = p.layer === 2
-          ? 0.5 + 0.5 * Math.sin(time * 0.05 + p.pulsePhase)
+          ? 0.5 + 0.5 * Math.sin(time * 0.04 + p.pulsePhase)
           : 1;
 
         // Draw particle
         const drawAlpha = p.alpha * pulse;
-        const glowSize = p.layer === 2 ? 25 : p.layer === 1 ? 18 : 8;
+        const glowSize = p.layer === 2 ? 18 : p.layer === 1 ? 12 : 6;
 
         ctx!.save();
         ctx!.globalAlpha = drawAlpha;
@@ -248,18 +279,18 @@ function InteractiveBackground() {
         ctx!.beginPath();
         ctx!.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx!.fill();
-        // Double-draw for extra glow on brand-colored particles
-        if (p.layer >= 1) {
-          ctx!.globalAlpha = drawAlpha * 0.4;
-          ctx!.shadowBlur = glowSize * 2;
+        // Subtle second glow pass on brand-colored particles only
+        if (p.layer === 1) {
+          ctx!.globalAlpha = drawAlpha * 0.25;
+          ctx!.shadowBlur = glowSize * 1.5;
           ctx!.beginPath();
-          ctx!.arc(p.x, p.y, p.size * 0.6, 0, Math.PI * 2);
+          ctx!.arc(p.x, p.y, p.size * 0.5, 0, Math.PI * 2);
           ctx!.fill();
         }
         ctx!.restore();
       });
 
-      // ─── Draw connections (only mid-layer for performance) ───
+      // ─── Draw connections (mid-layer — wider reach for cohesive mesh) ───
       const midParticles = particles.filter(p => p.layer === 1);
       for (let i = 0; i < midParticles.length; i++) {
         for (let j = i + 1; j < midParticles.length; j++) {
@@ -269,24 +300,24 @@ function InteractiveBackground() {
 
           if (distSq < CONNECTION_DISTANCE * CONNECTION_DISTANCE) {
             const dist = Math.sqrt(distSq);
-            const alpha = (1 - dist / CONNECTION_DISTANCE) * 0.25;
+            const alpha = (1 - dist / CONNECTION_DISTANCE) * 0.18;
 
-            // Connections near mouse glow orange and bright
+            // Connections near mouse glow orange
             const midX = (midParticles[i].x + midParticles[j].x) / 2;
             const midY = (midParticles[i].y + midParticles[j].y) / 2;
             const mDist = Math.sqrt((mx - midX) ** 2 + (my - midY) ** 2);
             const mInfluence = Math.max(0, 1 - mDist / (MOUSE_RADIUS * 1.5));
 
             ctx!.save();
-            ctx!.globalAlpha = alpha + mInfluence * 0.35;
+            ctx!.globalAlpha = alpha + mInfluence * 0.2;
             if (mInfluence > 0.2) {
               ctx!.strokeStyle = B.orange;
-              ctx!.shadowBlur = 6;
+              ctx!.shadowBlur = 4;
               ctx!.shadowColor = B.orange;
             } else {
-              ctx!.strokeStyle = `rgba(255,255,255,0.4)`;
+              ctx!.strokeStyle = `rgba(255,255,255,0.3)`;
             }
-            ctx!.lineWidth = 0.5 + mInfluence * 1.5;
+            ctx!.lineWidth = 0.4 + mInfluence * 1;
             ctx!.beginPath();
             ctx!.moveTo(midParticles[i].x, midParticles[i].y);
             ctx!.lineTo(midParticles[j].x, midParticles[j].y);
@@ -296,12 +327,11 @@ function InteractiveBackground() {
         }
       }
 
-      // ─── Central mouse glow (large, vivid) ───
+      // ─── Central mouse glow (subtle) ───
       if (mx > 0 && my > 0) {
-        const g = ctx!.createRadialGradient(mx, my, 0, mx, my, MOUSE_RADIUS * 0.8);
-        g.addColorStop(0, `rgba(239,131,22,0.12)`);
-        g.addColorStop(0.3, `rgba(40,65,209,0.06)`);
-        g.addColorStop(0.6, `rgba(239,131,22,0.02)`);
+        const g = ctx!.createRadialGradient(mx, my, 0, mx, my, MOUSE_RADIUS * 0.7);
+        g.addColorStop(0, `rgba(239,131,22,0.07)`);
+        g.addColorStop(0.35, `rgba(40,65,209,0.03)`);
         g.addColorStop(1, "transparent");
         ctx!.fillStyle = g;
         ctx!.fillRect(0, 0, width, height);
