@@ -59,7 +59,16 @@ export default function BroksVisionPage() {
   const footerRef = useRef<HTMLElement>(null);
   const footerCardsRef = useRef<(HTMLDivElement | null)[]>([]);
 
+  // Entry screen refs
+  const entryRef = useRef<HTMLDivElement>(null);
+  const entryTextRef = useRef<HTMLDivElement>(null);
+  const entryLineRef = useRef<HTMLDivElement>(null);
+  const entrySubRef = useRef<HTMLDivElement>(null);
+  const entryProgressRef = useRef<HTMLDivElement>(null);
+  const entryCountRef = useRef<HTMLDivElement>(null);
+
   const [mounted, setMounted] = useState(false);
+  const [entryDone, setEntryDone] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportDone, setExportDone] = useState(false);
 
@@ -106,6 +115,80 @@ export default function BroksVisionPage() {
       gsap.ticker.remove((time) => lenis.raf(time * 1000));
     };
   }, []);
+
+  // ─── ENTRY SCREEN ANIMATION ───
+  useEffect(() => {
+    if (!mounted || entryDone) return;
+
+    // Lock scroll during entry
+    document.body.style.overflow = "hidden";
+
+    const tl = gsap.timeline({
+      onComplete: () => {
+        setEntryDone(true);
+        document.body.style.overflow = "";
+      },
+    });
+
+    // Phase 1: Animate progress bar (0-100%)
+    const counter = { val: 0 };
+    tl.to(counter, {
+      val: 100,
+      duration: 2.2,
+      ease: "power2.inOut",
+      onUpdate: () => {
+        if (entryProgressRef.current) {
+          entryProgressRef.current.style.width = `${counter.val}%`;
+        }
+        if (entryCountRef.current) {
+          entryCountRef.current.textContent = `${Math.round(counter.val)}`;
+        }
+      },
+    });
+
+    // Phase 2: Reveal text elements
+    if (entryTextRef.current) {
+      const letters = entryTextRef.current.querySelectorAll(".entry-letter");
+      tl.fromTo(
+        letters,
+        { opacity: 0, y: 60, rotateX: -90 },
+        { opacity: 1, y: 0, rotateX: 0, stagger: 0.04, duration: 0.6, ease: "back.out(1.7)" },
+        "-=1.0"
+      );
+    }
+
+    if (entryLineRef.current) {
+      tl.fromTo(
+        entryLineRef.current,
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.8, ease: "power3.inOut" },
+        "-=0.6"
+      );
+    }
+
+    if (entrySubRef.current) {
+      tl.fromTo(
+        entrySubRef.current,
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" },
+        "-=0.4"
+      );
+    }
+
+    // Phase 3: Hold for a beat, then exit
+    tl.to({}, { duration: 0.6 });
+
+    // Phase 4: Collapse entry screen
+    if (entryRef.current) {
+      tl.to(entryRef.current, {
+        clipPath: "inset(0 0 100% 0)",
+        duration: 1.0,
+        ease: "power3.inOut",
+      });
+    }
+
+    return () => { tl.kill(); };
+  }, [mounted, entryDone]);
 
   // ─── GSAP ANIMATIONS ───
   useEffect(() => {
@@ -410,6 +493,163 @@ export default function BroksVisionPage() {
       className="relative -mt-20"
       style={{ background: B.black, color: B.white, fontFamily: "var(--font-geist-sans), system-ui, sans-serif" }}
     >
+      {/* ═══ ENTRY SCREEN ═══ */}
+      {!entryDone && (
+        <div
+          ref={entryRef}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 99999,
+            background: B.black,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            clipPath: "inset(0 0 0 0)",
+            willChange: "clip-path",
+          }}
+        >
+          {/* Grid background */}
+          <div style={{
+            position: "absolute", inset: 0, opacity: 0.03,
+            backgroundImage: `linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px)`,
+            backgroundSize: "60px 60px",
+          }} />
+
+          {/* Glowing orbs */}
+          <div style={{
+            position: "absolute", top: "20%", right: "20%",
+            width: "400px", height: "400px", borderRadius: "50%",
+            background: `radial-gradient(circle, ${B.orange}20, transparent 70%)`,
+            filter: "blur(80px)", pointerEvents: "none",
+          }} />
+          <div style={{
+            position: "absolute", bottom: "20%", left: "20%",
+            width: "300px", height: "300px", borderRadius: "50%",
+            background: `radial-gradient(circle, ${B.blue}18, transparent 70%)`,
+            filter: "blur(60px)", pointerEvents: "none",
+          }} />
+
+          {/* Counter */}
+          <div
+            ref={entryCountRef}
+            style={{
+              position: "absolute", top: "clamp(20px, 4vw, 40px)", right: "clamp(20px, 4vw, 40px)",
+              fontSize: "clamp(48px, 8vw, 80px)",
+              fontWeight: 900, letterSpacing: "-0.04em",
+              color: "rgba(255,255,255,0.06)",
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            0
+          </div>
+
+          {/* Main text: BROKS VISION letter by letter */}
+          <div
+            ref={entryTextRef}
+            style={{
+              fontSize: "clamp(48px, 10vw, 130px)",
+              fontWeight: 900,
+              letterSpacing: "-0.04em",
+              lineHeight: 0.85,
+              textAlign: "center",
+              perspective: "600px",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              {"BROKS".split("").map((letter, i) => (
+                <span
+                  key={`b${i}`}
+                  className="entry-letter"
+                  style={{
+                    display: "inline-block",
+                    color: B.white,
+                    opacity: 0,
+                    willChange: "transform, opacity",
+                  }}
+                >
+                  {letter}
+                </span>
+              ))}
+            </div>
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              {"VISION".split("").map((letter, i) => (
+                <span
+                  key={`v${i}`}
+                  className="entry-letter"
+                  style={{
+                    display: "inline-block",
+                    color: letter === "O" ? B.orange : B.white,
+                    opacity: 0,
+                    willChange: "transform, opacity",
+                  }}
+                >
+                  {letter}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Accent line */}
+          <div
+            ref={entryLineRef}
+            style={{
+              width: "min(60%, 400px)", height: "3px",
+              background: `linear-gradient(90deg, ${B.orange}, ${B.blue})`,
+              borderRadius: "2px", marginTop: "24px",
+              transformOrigin: "left center",
+              transform: "scaleX(0)",
+            }}
+          />
+
+          {/* Subtitle */}
+          <div
+            ref={entrySubRef}
+            style={{
+              marginTop: "20px",
+              fontSize: "clamp(11px, 1.2vw, 14px)",
+              fontWeight: 500,
+              letterSpacing: "0.25em",
+              textTransform: "uppercase",
+              color: "rgba(255,255,255,0.35)",
+              opacity: 0,
+            }}
+          >
+            360 Marketing Services
+          </div>
+
+          {/* Progress bar */}
+          <div style={{
+            position: "absolute", bottom: "clamp(40px, 6vw, 60px)",
+            left: "50%", transform: "translateX(-50%)",
+            width: "min(80%, 300px)", height: "2px",
+            background: "rgba(255,255,255,0.06)", borderRadius: "1px",
+            overflow: "hidden",
+          }}>
+            <div
+              ref={entryProgressRef}
+              style={{
+                height: "100%", width: "0%",
+                background: `linear-gradient(90deg, ${B.orange}, ${B.blue})`,
+                borderRadius: "1px",
+                transition: "none",
+              }}
+            />
+          </div>
+
+          {/* Bottom label */}
+          <div style={{
+            position: "absolute", bottom: "clamp(20px, 3vw, 32px)",
+            left: "50%", transform: "translateX(-50%)",
+            fontSize: "9px", letterSpacing: "0.3em",
+            textTransform: "uppercase", color: "rgba(255,255,255,0.15)",
+          }}>
+            Loading Experience
+          </div>
+        </div>
+      )}
+
       {/* Hide parent navbar/footer for this immersive page */}
       <style>{`
         nav, .navbar, header > nav { display: none !important; }
