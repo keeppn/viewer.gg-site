@@ -854,7 +854,7 @@ export default function BroksVisionPage() {
             prevPoint = { x: point.x, y: point.y };
 
             pacmanRef.current.style.transform = `translate(${screenX}px, ${screenY}px) rotate(${angle}deg)`;
-            pacmanRef.current.style.opacity = progress > 0.01 && progress < 0.99 ? "0.18" : "0";
+            pacmanRef.current.style.opacity = progress > 0.01 && progress < 0.99 ? "0.15" : "0";
 
             // "Eat" the dots — make eaten portion invisible by rebuilding dasharray:
             // Pattern: [0 (invisible dash), eatenLength (invisible gap), 0.5 (dot), 1.2 (gap), ...]
@@ -1085,7 +1085,7 @@ export default function BroksVisionPage() {
 
   return (
     <div ref={containerRef} className="relative -mt-20"
-      style={{ background: B.black, color: B.white, fontFamily: "var(--font-geist-sans), system-ui, sans-serif" }}>
+      style={{ background: B.black, color: B.white, fontFamily: "var(--font-geist-sans), system-ui, sans-serif", isolation: "isolate" }}>
       <style>{`
         nav, .navbar, header > nav { display: none !important; }
         footer:not(.bv-footer) { display: none !important; }
@@ -1126,10 +1126,11 @@ export default function BroksVisionPage() {
       {/* ═══ SCROLL PAC-MAN — classic pac-man eating dots along S-curve ═══ */}
       {/* Classic pac-man: big, background layer, eating dots */}
       <div ref={pacmanRef} style={{
-        position: "fixed", top: 0, left: 0, zIndex: 3,
+        position: "fixed", top: 0, left: 0, zIndex: -1,
         width: "80px", height: "80px", pointerEvents: "none",
         opacity: 0, transition: "opacity 0.4s",
         transform: "translate(-50%, -50%)",
+        mixBlendMode: "soft-light",
       }}>
         {/* Classic pac-man circle with animated mouth */}
         <div className="pacman-body" style={{
@@ -1141,15 +1142,15 @@ export default function BroksVisionPage() {
       {/* The S-curve path — visible as a dotted trail */}
       <svg className="pacman-trail-svg" style={{
         position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
-        pointerEvents: "none", zIndex: 2,
+        pointerEvents: "none", zIndex: -1, mixBlendMode: "soft-light",
       }} viewBox="0 0 100 100" preserveAspectRatio="none">
         {/* Dotted trail path — the dots pac-man eats */}
         <path
           ref={pacmanPathRef}
           d="M 85 1 C 85 12, 15 18, 15 32 S 85 42, 85 52 S 15 62, 15 72 S 85 82, 50 99"
           fill="none"
-          stroke={`${B.orange}20`}
-          strokeWidth="0.15"
+          stroke={`${B.orange}30`}
+          strokeWidth="0.18"
           strokeDasharray="0.5 1.2"
           strokeLinecap="round"
         />
